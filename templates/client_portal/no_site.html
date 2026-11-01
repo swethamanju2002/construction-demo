@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Client Portal | Structura CRM{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 650px; padding-top: 5rem; padding-bottom: 5rem; text-align: center;">
+  <div class="card" style="padding: 3rem 2rem; box-shadow: var(--shadow-md);">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🏗</div>
+    <h2 style="margin-bottom: 0.5rem;">Project Assignment Pending</h2>
+    <p style="margin-bottom: 1.5rem;">
+      Hello {{ user.first_name|default:user.username }}, your homeowner account is active, but your construction site has not been assigned by the project administrator yet.
+    </p>
+    <div style="background: var(--surface-subtle); padding: 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.5rem;">
+      Please contact your Lead Project Engineer or call headquarters at <strong>+1 (800) 555-STRUCT</strong> to connect your project.
+    </div>
+    <a href="{% url 'core:home' %}" class="btn btn-primary">Return to Homepage</a>
+  </div>
+</div>
+{% endblock %}

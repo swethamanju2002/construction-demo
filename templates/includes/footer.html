@@ -1,0 +1,54 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col" style="grid-column: span 1.5;">
+        <div class="nav-brand" style="margin-bottom: 1rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--amber);">
+            <path d="M3 21h18M5 21V7l8-4 6 3v15M9 9h2M9 13h2M9 17h2M14 9h2M14 13h2M14 17h2"/>
+          </svg>
+          <span style="color: #fff;">STRUCTURA CRM</span>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.92rem; line-height: 1.6; max-width: 320px;">
+          Next-generation construction project management and transparent homeowner tracking platform. Engineering precision from foundation to finishing touches.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'core:home' %}">Home</a></li>
+          <li><a href="{% url 'core:about' %}">About Us</a></li>
+          <li><a href="{% url 'core:gallery' %}">Project Gallery</a></li>
+          <li><a href="{% url 'core:contact' %}">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Portals</h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'accounts:login' %}">Site Admin Portal</a></li>
+          <li><a href="{% url 'accounts:login' %}">Homeowner Client Portal</a></li>
+          <li><a href="/django-admin/">Django Administration</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Headquarters</h4>
+        <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 8px;">
+          450 Architecture Blvd, Suite 800<br>
+          Metropolis Engineering District
+        </p>
+        <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+          <strong>Phone:</strong> +1 (800) 555-STRUCT<br>
+          <strong>Email:</strong> contact@structuracrm.com
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem;">
+        &copy; 2026 Structura Construction Project CRM. All rights reserved. Precision-built with Python & Django.
+      </p>
+    </div>
+  </div>
+</footer>

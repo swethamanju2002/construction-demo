@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Clients | Structura CRM{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+        <span class="badge badge-ongoing">Client Directory</span>
+        <span style="color: var(--text-muted); font-size: 0.85rem;">{{ total_clients }} Registered Homeowners & Commercial Clients</span>
+      </div>
+      <h1>Client & Homeowner Accounts</h1>
+      <p>Manage authenticated client credentials, contact details, and site assignments.</p>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline">
+        ← Portfolio Overview
+      </a>
+      <a href="{% url 'projects:admin_client_create' %}" class="btn btn-amber">
+        + Register New Client
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Client Name</th>
+          <th>Username / ID</th>
+          <th>Contact Info</th>
+          <th>Assigned Construction Project</th>
+          <th>Account Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: var(--navy); font-size: 1rem;">
+              {{ client.get_full_name|default:client.username }}
+            </div>
+            {% if client.company_name %}
+              <div style="font-size: 0.82rem; color: var(--text-muted);">🏢 {{ client.company_name }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <code>{{ client.username }}</code>
+          </td>
+          <td style="font-size: 0.88rem;">
+            <div>✉ {{ client.email|default:"No email" }}</div>
+            {% if client.phone_number %}
+              <div style="color: var(--text-muted);">📞 {{ client.phone_number }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% for site in client.assigned_sites.all %}
+              <div style="margin-bottom: 4px;">
+                <a href="{% url 'projects:admin_site_detail' site.id %}" style="font-weight: 600;">
+                  🏗 {{ site.name }}
+                </a>
+                <span class="badge {{ site.status_badge_class }}" style="font-size: 0.7rem; margin-left: 6px;">{{ site.calculate_overall_progress }}%</span>
+              </div>
+            {% empty %}
+              <span style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">No site assigned yet</span>
+              <a href="{% url 'projects:admin_site_create' %}" class="btn btn-outline btn-sm" style="margin-left: 6px; padding: 2px 8px; font-size: 0.75rem;">
+                + Assign Site
+              </a>
+            {% endfor %}
+          </td>
+          <td style="font-size: 0.85rem; color: var(--text-muted);">
+            {{ client.date_joined|date:"M d, Y" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            No clients registered yet. Click "Register New Client" above.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

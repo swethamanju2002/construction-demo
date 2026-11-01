@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Structura CRM | Construction Project Management & Progress Tracking{% endblock %}</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Theme & Design System Styles -->
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  
+  <!-- Chart.js for Client Progress Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Global Navigation Header -->
+  {% include 'includes/navbar.html' %}
+
+  <!-- Flash Notification Messages -->
+  {% include 'includes/messages.html' %}
+
+  <!-- Main Content Body -->
+  <main style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Global Image Lightbox Modal -->
+  <div class="modal-overlay" id="lightboxOverlay">
+    <div class="modal-content" style="max-width: 900px; padding: 0; background: #000; overflow: hidden; position: relative;">
+      <button class="modal-close" id="lightboxClose">&times;</button>
+      <div style="max-height: 80vh; display: flex; align-items: center; justify-content: center; background: #0B1928;">
+        <img id="lightboxImg" src="" alt="Site Photo Enclosure" style="max-height: 75vh; width: auto; object-fit: contain; margin: 0 auto;">
+      </div>
+      <div style="background: var(--navy); color: #fff; padding: 1rem 1.5rem;">
+        <p id="lightboxCaption" style="color: #fff; font-weight: 500; margin: 0;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Footer -->
+  {% include 'includes/footer.html' %}
+
+  <!-- Base Utilities -->
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

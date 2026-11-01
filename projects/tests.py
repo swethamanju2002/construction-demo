@@ -1,0 +1,208 @@
+from decimal import Decimal
+from django.test import TestCase
+from django.utils import timezone
+from accounts.models import User
+from projects.models import ConstructionSite, WorkCategory, SiteCategoryProgress, SiteTask
+
+
+class ProgressCalculationTests(TestCase):
+    def setUp(self):
+        # Create client user
+        self.client_user = User.objects.create_user(
+            username='testclient',
+            email='client@test.com',
+            password='Password123!',
+            is_client=True
+        )
+
+        # Create construction site - trigger post_save signals
+        self.site = ConstructionSite.objects.create(
+            name='Oceanview Villa Project',
+            client=self.client_user,
+            site_address='100 Ocean Drive, Coastal Bay',
+            start_date=timezone.now().date(),
+            estimated_completion_date=timezone.now().date() + timezone.timedelta(days=180),
+            status=ConstructionSite.STATUS_ONGOING
+        )
+
+    def test_auto_population_of_categories_and_tasks(self):
+        """
+        Verify that creating a site automatically populates:
+        - 5 categories (3 mandatory enabled, 2 optional disabled)
+        - Predefined subtasks for each category
+        """
+        category_progresses = self.site.category_progresses.all()
+        self.assertEqual(category_progresses.count(), 5)
+
+        # Mandatory categories must be enabled
+        mandatory_slugs = ['building-work', 'electrical-work', 'plumbing-work']
+        for slug in mandatory_slugs:
+            cp = category_progresses.get(category__slug=slug)
+            self.assertTrue(cp.is_enabled, f"{slug} should be enabled by default")
+            self.assertEqual(cp.progress_percentage, Decimal('0.00'))
+
+        # Optional categories must be disabled
+        optional_slugs = ['showcase-work', 'wall-ceiling-work']
+        for slug in optional_slugs:
+            cp = category_progresses.get(category__slug=slug)
+            self.assertFalse(cp.is_enabled, f"{slug} should be disabled by default")
+            self.assertEqual(cp.progress_percentage, Decimal('0.00'))
+
+        # Verify task checklist counts
+        building_cp = category_progresses.get(category__slug='building-work')
+        self.assertEqual(building_cp.tasks.count(), 4)
+        expected_building_tasks = ['Basement', 'Lintel', 'Roof Concrete', 'Finishing Touch']
+        self.assertListEqual(
+            list(building_cp.tasks.values_list('task_name', flat=True)),
+            expected_building_tasks
+        )
+
+        electrical_cp = category_progresses.get(category__slug='electrical-work')
+        self.assertEqual(electrical_cp.tasks.count(), 3)
+
+        plumbing_cp = category_progresses.get(category__slug='plumbing-work')
+        self.assertEqual(plumbing_cp.tasks.count(), 4)
+
+        showcase_cp = category_progresses.get(category__slug='showcase-work')
+        self.assertEqual(showcase_cp.tasks.count(), 3)
+
+        wall_cp = category_progresses.get(category__slug='wall-ceiling-work')
+        self.assertEqual(wall_cp.tasks.count(), 3)
+
+    def test_three_mandatory_categories_calculation(self):
+        """
+        Test blueprint example 1:
+        Building Work = 60%, Electrical Work = 40%, Plumbing Work = 75%.
+        Optional categories disabled.
+        Overall Progress = (60 + 40 + 75) / 3 = 175 / 3 = 58.33%
+        """
+        building = self.site.category_progresses.get(category__slug='building-work')
+        electrical = self.site.category_progresses.get(category__slug='electrical-work')
+        plumbing = self.site.category_progresses.get(category__slug='plumbing-work')
+
+        building.progress_percentage = Decimal('60.00')
+        building.save()
+
+        electrical.progress_percentage = Decimal('40.00')
+        electrical.save()
+
+        plumbing.progress_percentage = Decimal('75.00')
+        plumbing.save()
+
+        # Ensure optional are disabled
+        showcase = self.site.category_progresses.get(category__slug='showcase-work')
+        showcase.progress_percentage = Decimal('30.00')
+        showcase.is_enabled = False
+        showcase.save()
+
+        wall = self.site.category_progresses.get(category__slug='wall-ceiling-work')
+        wall.progress_percentage = Decimal('50.00')
+        wall.is_enabled = False
+        wall.save()
+
+        overall = self.site.calculate_overall_progress()
+        self.assertEqual(overall, Decimal('58.33'))
+
+    def test_five_categories_all_enabled_calculation(self):
+        """
+        Test blueprint example 2:
+        Building: 60%, Electrical: 40%, Plumbing: 75%, Showcase: 30%, Wall Ceiling: 50%.
+        All 5 enabled.
+        Overall Progress = (60 + 40 + 75 + 30 + 50) / 5 = 255 / 5 = 51.67%
+        """
+        building = self.site.category_progresses.get(category__slug='building-work')
+        electrical = self.site.category_progresses.get(category__slug='electrical-work')
+        plumbing = self.site.category_progresses.get(category__slug='plumbing-work')
+        showcase = self.site.category_progresses.get(category__slug='showcase-work')
+        wall = self.site.category_progresses.get(category__slug='wall-ceiling-work')
+
+        building.progress_percentage = Decimal('60.00')
+        building.save()
+
+        electrical.progress_percentage = Decimal('40.00')
+        electrical.save()
+
+        plumbing.progress_percentage = Decimal('75.00')
+        plumbing.save()
+
+        showcase.progress_percentage = Decimal('30.00')
+        showcase.is_enabled = True
+        showcase.save()
+
+        wall.progress_percentage = Decimal('50.00')
+        wall.is_enabled = True
+        wall.save()
+
+        overall = self.site.calculate_overall_progress()
+        # (60 + 40 + 75 + 30 + 50) / 5 = 255 / 5 = 51.00%
+        self.assertEqual(overall, Decimal('51.00'))
+
+        # Also test with wall ceiling at 53.33% yielding 51.67%
+        wall.progress_percentage = Decimal('53.33')
+        wall.save()
+        overall_with_53 = self.site.calculate_overall_progress()
+        self.assertEqual(overall_with_53, Decimal('51.67'))
+
+
+    def test_task_checklist_completion_dynamic_recalculation(self):
+        """
+        Verify that marking tasks complete dynamically recalculates category progress.
+        Building Work has 4 tasks:
+        - 1 completed -> 25.00%
+        - 2 completed -> 50.00%
+        - 3 completed -> 75.00%
+        - 4 completed -> 100.00%
+        """
+        building = self.site.category_progresses.get(category__slug='building-work')
+        tasks = list(building.tasks.all())
+        self.assertEqual(len(tasks), 4)
+
+        # Mark 1 task completed
+        tasks[0].is_completed = True
+        tasks[0].save()
+        building.refresh_from_db()
+        self.assertEqual(building.progress_percentage, Decimal('25.00'))
+
+        # Mark 2nd task completed
+        tasks[1].is_completed = True
+        tasks[1].save()
+        building.refresh_from_db()
+        self.assertEqual(building.progress_percentage, Decimal('50.00'))
+
+        # Uncheck 1st task
+        tasks[0].is_completed = False
+        tasks[0].save()
+        building.refresh_from_db()
+        self.assertEqual(building.progress_percentage, Decimal('25.00'))
+
+    def test_disabled_optional_categories_not_in_denominator(self):
+        """
+        Verify that when an optional category is disabled, it is strictly excluded
+        from both sum and denominator.
+        """
+        building = self.site.category_progresses.get(category__slug='building-work')
+        electrical = self.site.category_progresses.get(category__slug='electrical-work')
+        plumbing = self.site.category_progresses.get(category__slug='plumbing-work')
+        showcase = self.site.category_progresses.get(category__slug='showcase-work')
+
+        building.progress_percentage = Decimal('100.00')
+        building.save()
+        electrical.progress_percentage = Decimal('100.00')
+        electrical.save()
+        plumbing.progress_percentage = Decimal('100.00')
+        plumbing.save()
+
+        # Overall should be 100.00% with 3 mandatory
+        self.assertEqual(self.site.calculate_overall_progress(), Decimal('100.00'))
+
+        # If showcase is enabled with 0%, overall should drop to (300/4) = 75.00%
+        showcase.is_enabled = True
+        showcase.progress_percentage = Decimal('0.00')
+        showcase.save()
+        self.assertEqual(self.site.calculate_overall_progress(), Decimal('75.00'))
+
+        # When showcase is disabled again, it must return to 100.00%
+        showcase.is_enabled = False
+        showcase.save()
+        self.assertEqual(self.site.calculate_overall_progress(), Decimal('100.00'))
+

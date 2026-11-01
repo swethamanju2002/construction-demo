@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Structura CRM | Commercial & Residential Construction Project Intelligence{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-tag">
+        <span>⚡ Precision Engineering & Real-Time Tracking</span>
+      </div>
+      <h1 class="hero-title">
+        Building Tomorrow's Landmarks with Uncompromising Integrity
+      </h1>
+      <p class="hero-subtitle">
+        Structura connects high-precision civil engineering with radical transparency. From subterranean foundations to high-end architectural finishing, homeowners and contractors track every subtask in real-time.
+      </p>
+      <div class="hero-actions">
+        <a href="{% url 'core:gallery' %}" class="btn btn-amber" style="padding: 14px 28px; font-size: 1rem;">
+          Explore Active Builds
+        </a>
+        <a href="{% url 'core:contact' %}" class="btn btn-outline-white" style="padding: 14px 28px; font-size: 1rem;">
+          Request Consultation
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE STATS STRIP -->
+<section style="background: var(--surface); border-bottom: 1px solid var(--border); padding: 2.5rem 0;">
+  <div class="container">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center;">
+      <div>
+        <div style="font-size: 2.75rem; font-weight: 800; color: var(--navy); line-height: 1;">{{ total_sites|default:"12" }}+</div>
+        <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-top: 6px;">Sites Under Management</div>
+      </div>
+      <div>
+        <div style="font-size: 2.75rem; font-weight: 800; color: var(--primary); line-height: 1;">100%</div>
+        <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-top: 6px;">Verified Telemetry</div>
+      </div>
+      <div>
+        <div style="font-size: 2.75rem; font-weight: 800; color: var(--amber); line-height: 1;">24/7</div>
+        <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-top: 6px;">Client Progress Portal</div>
+      </div>
+      <div>
+        <div style="font-size: 2.75rem; font-weight: 800; color: var(--success); line-height: 1;">{{ completed_count|default:"8" }}+</div>
+        <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-top: 6px;">Completed Handheld Builds</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CORE ENGINEERING DOMAINS -->
+<section style="padding: 5rem 0; background: var(--bg-main);">
+  <div class="container">
+    <div style="text-align: center; max-width: 680px; margin: 0 auto 3.5rem;">
+      <span class="badge badge-ongoing" style="margin-bottom: 8px;">Technical Standards</span>
+      <h2>Mandatory & Architectural Categories</h2>
+      <p>Every construction site is governed by strict stage-gate quality control across five core disciplines.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      
+      <!-- Building Work -->
+      <div class="card" style="border-top: 4px solid var(--primary);">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">🏛</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 1.2rem;">Building Work</h3>
+          <span class="badge badge-mandatory">Mandatory</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">Deep excavation, RCC seismic footings, lintel beam casting, slab concrete pouring, and masonry finishing.</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Subtasks: Basement &bull; Lintel &bull; Roof Concrete &bull; Finishing Touch</div>
+      </div>
+
+      <!-- Electrical Work -->
+      <div class="card" style="border-top: 4px solid var(--amber);">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">⚡</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 1.2rem;">Electrical Work</h3>
+          <span class="badge badge-mandatory">Mandatory</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">Concealed conduit channeling, fire-retardant circuit wiring, automated switchboard distribution, and architectural luminaires.</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Subtasks: Pipe Concealing &bull; Wiring &bull; Switchboard & Light Fitting</div>
+      </div>
+
+      <!-- Plumbing Work -->
+      <div class="card" style="border-top: 4px solid #0284C7;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">💧</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 1.2rem;">Plumbing Work</h3>
+          <span class="badge badge-mandatory">Mandatory</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">Pressure-tested concealed water lines, drainage routing, overhead water tank anchoring, and designer sanitary fixture installations.</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Subtasks: Pipe Concealing &bull; Pipe Fitting &bull; Tank Fixing &bull; Bathroom Fittings</div>
+      </div>
+
+      <!-- Showcase & Millwork -->
+      <div class="card" style="border-top: 4px solid #8B5CF6;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">🛋</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 1.2rem;">Showcase Work</h3>
+          <span class="badge badge-optional">Optional</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">Bespoke architectural cabinetry, custom display consoles, and premium hardwood joinery tailored to homeowner specifications.</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Subtasks: Planning &bull; Base Fitting &bull; Completing</div>
+      </div>
+
+      <!-- Wall & False Ceiling -->
+      <div class="card" style="border-top: 4px solid #EC4899;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">🏗</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 1.2rem;">Wall Ceiling Work</h3>
+          <span class="badge badge-optional">Optional</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-bottom: 1rem;">Perimeter steel channel layout, acoustic gypsum board ceiling installation, recessed cove lighting channels, and seamless plaster finish.</p>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Subtasks: Planning &bull; Channel Fitting &bull; Completing</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CONSTRUCTION PROCESS LIFECYCLE -->
+<section style="padding: 5rem 0; background: var(--surface);">
+  <div class="container">
+    <div style="text-align: center; max-width: 680px; margin: 0 auto 3.5rem;">
+      <span class="badge badge-ongoing" style="margin-bottom: 8px;">Engineering Roadmap</span>
+      <h2>Our 4-Phase Delivery Framework</h2>
+      <p>Precision execution with real-time digital milestones logged at every phase.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+      <div style="padding: 1.5rem; border-left: 3px solid var(--primary); background: var(--surface-subtle); border-radius: var(--radius-sm);">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">PHASE 01</div>
+        <h4 style="margin-bottom: 8px;">Subterranean & Foundation</h4>
+        <p style="font-size: 0.9rem;">Soil analysis, seismic basement footings, column erection, and ground slab pouring.</p>
+      </div>
+
+      <div style="padding: 1.5rem; border-left: 3px solid var(--amber); background: var(--surface-subtle); border-radius: var(--radius-sm);">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--amber); margin-bottom: 4px;">PHASE 02</div>
+        <h4 style="margin-bottom: 8px;">Superstructure & Concrete</h4>
+        <p style="font-size: 0.9rem;">Lintel beams, reinforced roof concrete casting, perimeter brick masonry, and curing validation.</p>
+      </div>
+
+      <div style="padding: 1.5rem; border-left: 3px solid var(--accent); background: var(--surface-subtle); border-radius: var(--radius-sm);">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--accent); margin-bottom: 4px;">PHASE 03</div>
+        <h4 style="margin-bottom: 8px;">Concealed Utilities</h4>
+        <p style="font-size: 0.9rem;">Concealed electrical conduit routing, plumbing pressure testing, overhead water tank anchoring.</p>
+      </div>
+
+      <div style="padding: 1.5rem; border-left: 3px solid var(--success); background: var(--surface-subtle); border-radius: var(--radius-sm);">
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--success); margin-bottom: 4px;">PHASE 04</div>
+        <h4 style="margin-bottom: 8px;">Finishing & Handover</h4>
+        <p style="font-size: 0.9rem;">Gypsum ceilings, switchboard fixture, sanitary ware, optional showcases, and final client walkthrough.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALL TO ACTION BANNER -->
+<section style="background: var(--navy); color: #fff; padding: 4.5rem 0; text-align: center;">
+  <div class="container" style="max-width: 720px;">
+    <h2 style="color: #fff; font-size: 2.25rem; margin-bottom: 1rem;">Ready to Build with Total Confidence?</h2>
+    <p style="color: rgba(255,255,255,0.85); font-size: 1.1rem; margin-bottom: 2rem;">
+      Partner with a construction firm that gives you a personal live tracking dashboard from groundbreaking to key handover.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'core:contact' %}" class="btn btn-amber" style="padding: 12px 28px;">
+        Request an On-Site Consultation
+      </a>
+      <a href="{% url 'accounts:login' %}" class="btn btn-outline-white" style="padding: 12px 28px;">
+        Access Client Demo
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard | Structura CRM{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <!-- Page Header & Action Bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+        <span class="badge badge-ongoing">Site Administrator</span>
+        <span style="color: var(--text-muted); font-size: 0.85rem;">Project Operations Command</span>
+      </div>
+      <h1>Construction Portfolio Overview</h1>
+      <p>Manage active construction projects, configure work categories, and record real-time progress.</p>
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{% url 'projects:admin_client_list' %}" class="btn btn-outline">
+        👥 Manage Clients ({{ total_clients }})
+      </a>
+      <a href="{% url 'projects:admin_site_create' %}" class="btn btn-amber">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Create New Construction Site
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Statistics Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Total Sites</div>
+      <div class="metric-value">{{ total_sites }}</div>
+      <div class="metric-hint">Active sites under management</div>
+    </div>
+
+    <div class="metric-card accent">
+      <div class="metric-label">Ongoing Builds</div>
+      <div class="metric-value">{{ ongoing_count }}</div>
+      <div class="metric-hint">{{ planning_count }} in planning phase</div>
+    </div>
+
+    <div class="metric-card success">
+      <div class="metric-label">Completed Builds</div>
+      <div class="metric-value">{{ completed_count }}</div>
+      <div class="metric-hint">Delivered to homeowners</div>
+    </div>
+
+    <div class="metric-card amber">
+      <div class="metric-label">Avg. Completion</div>
+      <div class="metric-value">{{ avg_progress }}%</div>
+      <div class="metric-hint">Across all active sites</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 260px;">
+        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by site name, client name, or address...">
+      </div>
+      <div style="min-width: 180px;">
+        <select name="status" class="form-select">
+          <option value="">All Project Statuses</option>
+          {% for code, label in status_choices %}
+            <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      {% if query or status_filter %}
+        <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Sites Table -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Construction Project</th>
+          <th>Assigned Client</th>
+          <th>Status</th>
+          <th>Timeline</th>
+          <th>Overall Progress</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for site in sites %}
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: var(--navy); font-size: 1rem;">
+              <a href="{% url 'projects:admin_site_detail' site.id %}">{{ site.name }}</a>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">
+              📍 {{ site.site_address|truncatechars:45 }}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600;">{{ site.client.get_full_name|default:site.client.username }}</div>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">{{ site.client.email|default:"No email recorded" }}</div>
+          </td>
+          <td>
+            <span class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</span>
+          </td>
+          <td style="font-size: 0.85rem;">
+            <div><strong>Start:</strong> {{ site.start_date|date:"M d, Y" }}</div>
+            <div style="color: var(--text-muted);"><strong>Est:</strong> {{ site.estimated_completion_date|date:"M d, Y" }}</div>
+          </td>
+          <td style="min-width: 180px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
+              <span>Progress</span>
+              <span style="color: var(--primary);">{{ site.calculate_overall_progress }}%</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" style="width: {{ site.calculate_overall_progress }}%;"></div>
+            </div>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <a href="{% url 'projects:admin_site_detail' site.id %}" class="btn btn-primary btn-sm" title="Manage subtasks and progress photos">
+              Manage Tasks ⚙
+            </a>
+            <a href="{% url 'projects:admin_site_edit' site.id %}" class="btn btn-outline btn-sm" title="Edit Site Details">
+              Edit ✏
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏗</div>
+            <div style="font-size: 1.15rem; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem;">No construction sites found</div>
+            <p style="margin-bottom: 1.5rem;">Create your first construction project to begin tracking subtasks and client progress.</p>
+            <a href="{% url 'projects:admin_site_create' %}" class="btn btn-amber">Create New Site</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

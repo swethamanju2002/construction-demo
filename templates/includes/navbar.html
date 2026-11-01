@@ -1,0 +1,53 @@
+{% load static %}
+<nav class="navbar">
+  <div class="container nav-container">
+    <a href="{% url 'core:home' %}" class="nav-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--amber);">
+        <path d="M3 21h18M5 21V7l8-4 6 3v15M9 9h2M9 13h2M9 17h2M14 9h2M14 13h2M14 17h2"/>
+      </svg>
+      <span>STRUCTURA</span>
+      <span class="brand-badge">CRM</span>
+    </a>
+
+    <!-- Desktop & Mobile Menu -->
+    <ul class="nav-menu" id="navMenu">
+      <li><a href="{% url 'core:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
+      <li><a href="{% url 'core:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About Us</a></li>
+      <li><a href="{% url 'core:gallery' %}" class="nav-link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}">Project Gallery</a></li>
+      <li><a href="{% url 'core:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a></li>
+      
+      {% if user.is_authenticated %}
+        {% if user.is_site_admin or user.is_superuser %}
+          <li><a href="{% url 'projects:admin_dashboard' %}" class="nav-link" style="color: var(--amber); font-weight: 700;">⚙ Sites</a></li>
+          <li><a href="{% url 'projects:admin_client_list' %}" class="nav-link" style="color: var(--accent); font-weight: 600;">👥 Clients</a></li>
+        {% elif user.is_client %}
+          <li><a href="{% url 'projects:client_dashboard' %}" class="nav-link" style="color: var(--accent); font-weight: 700;">🏗 My Project</a></li>
+        {% endif %}
+      {% endif %}
+    </ul>
+
+    <!-- Action Buttons -->
+    <div class="nav-actions">
+      {% if user.is_authenticated %}
+        <span style="color: rgba(255,255,255,0.85); font-size: 0.88rem; display: flex; align-items: center; gap: 8px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
+          <strong>{{ user.first_name|default:user.username }}</strong>
+          <span class="badge {% if user.is_site_admin %}badge-ongoing{% else %}badge-planning{% endif %}" style="font-size: 0.68rem;">{{ user.role_label }}</span>
+        </span>
+        <a href="{% url 'accounts:logout' %}" class="btn btn-outline-white btn-sm">Log Out</a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-amber btn-sm">Portal Login</a>
+      {% endif %}
+
+      <!-- Mobile Hamburger Button -->
+      <button type="button" id="mobileNavToggle" aria-label="Toggle navigation" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; display: none;" class="d-md-none">
+        ☰
+      </button>
+    </div>
+  </div>
+</nav>
+<style>
+  @media (max-width: 991px) {
+    #mobileNavToggle { display: block !important; }
+  }
+</style>

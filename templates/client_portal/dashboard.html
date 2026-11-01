@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ site.name }} - Progress Tracker | Structura CRM{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+
+  <!-- Client Header & Project Identifiers -->
+  <div style="margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+      <span class="badge badge-ongoing">Client Progress Portal</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">Verified Construction Telemetry</span>
+    </div>
+    <h1 style="font-size: 2.25rem; margin-bottom: 6px;">{{ site.name }}</h1>
+    <p style="font-size: 1.05rem;">Homeowner Tracker for <strong>{{ site.client.get_full_name|default:site.client.username }}</strong></p>
+  </div>
+
+  <!-- Project Overview Card -->
+  <div class="card" style="margin-bottom: 2.5rem; border-top: 5px solid var(--accent); box-shadow: var(--shadow-md);">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+      <div>
+        <div class="metric-label">Site Location</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 1.05rem;">{{ site.site_address }}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Registered Plot / Civic Address</div>
+      </div>
+
+      <div>
+        <div class="metric-label">Current Phase</div>
+        <div style="margin-top: 2px;">
+          <span class="badge {{ site.status_badge_class }}" style="font-size: 0.88rem; padding: 6px 12px;">
+            {{ site.get_status_display }}
+          </span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px;">Active on-site civil works</div>
+      </div>
+
+      <div>
+        <div class="metric-label">Key Milestones</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 0.95rem;">
+          Groundbreak: {{ site.start_date|date:"M d, Y" }}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 2px;">
+          Est. Handover: {{ site.estimated_completion_date|date:"M d, Y" }}
+        </div>
+      </div>
+
+      <div>
+        <div class="metric-label">Assigned Project Lead</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 0.95rem;">{{ site.project_manager }}</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Senior Resident Engineer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE PROGRESS VISUALIZATIONS ROW -->
+  <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 2rem; margin-bottom: 3rem;" class="progress-charts-grid">
+    
+    <!-- 1. Overall Progress Donut Chart -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="card-header" style="margin-bottom: 1rem;">
+        <div>
+          <h3>Overall Site Completion</h3>
+          <p style="font-size: 0.85rem;">Calculated average of all active categories</p>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+        <canvas id="overallProgressDonut" data-completed="{{ overall_progress }}" data-remaining="{{ remaining_progress }}"></canvas>
+      </div>
+
+      <div style="display: flex; justify-content: space-around; padding-top: 1.25rem; border-top: 1px solid var(--border); text-align: center;">
+        <div>
+          <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Completed</div>
+          <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">{{ overall_progress }}%</div>
+        </div>
+        <div style="border-left: 1px solid var(--border);"></div>
+        <div>
+          <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Remaining</div>
+          <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-secondary);">{{ remaining_progress }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Category Breakdown Horizontal Bar Chart -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="card-header" style="margin-bottom: 1rem;">
+        <div>
+          <h3>Category Progress Breakdown</h3>
+          <p style="font-size: 0.85rem;">Real-time status across enabled work streams</p>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 260px; width: 100%;">
+        <canvas id="categoryBarChart" data-labels='{{ chart_category_labels_json|safe }}' data-values='{{ chart_category_data_json|safe }}'></canvas>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right; padding-top: 1rem; border-top: 1px solid var(--border);">
+        * Disabled optional categories are strictly omitted from mathematical calculations.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CATEGORY TASK COMPLETION BREAKDOWN CARDS -->
+  <div style="margin-bottom: 3.5rem;">
+    <div style="margin-bottom: 1.5rem;">
+      <h2>Detailed Engineering Work Streams</h2>
+      <p>Verified subtask completion records signed off by site inspectors.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+      {% for scp in enabled_categories %}
+      <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+              <h3 style="font-size: 1.15rem; margin-bottom: 2px;">{{ scp.category.name }}</h3>
+              <span class="badge {% if scp.progress_percentage == 100 %}badge-completed{% else %}badge-ongoing{% endif %}" style="font-size: 0.7rem;">
+                {% if scp.progress_percentage == 100 %}100% Completed{% else %}Work In Progress{% endif %}
+              </span>
+            </div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: var(--navy);">
+              {{ scp.progress_percentage }}%
+            </div>
+          </div>
+
+          <div class="progress-container" style="height: 10px; margin-bottom: 1rem;">
+            <div class="progress-bar {% if scp.progress_percentage == 100 %}success{% endif %}" style="width: {{ scp.progress_percentage }}%;"></div>
+          </div>
+
+          <!-- Read-Only Subtask Pills / List -->
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+            Subtasks Status ({{ scp.completed_tasks_count }} of {{ scp.total_tasks_count }} Verified):
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% for task in scp.tasks.all %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: {% if task.is_completed %}#F0FDF4{% else %}var(--surface-subtle){% endif %}; border: 1px solid {% if task.is_completed %}#BBF7D0{% else %}var(--border){% endif %}; border-radius: var(--radius-sm); font-size: 0.88rem;">
+              <span style="display: flex; align-items: center; gap: 8px; color: {% if task.is_completed %}#14532D; font-weight: 600;{% else %}var(--text-secondary);{% endif %}">
+                <span>{% if task.is_completed %}✓{% else %}○{% endif %}</span>
+                <span>{{ task.task_name }}</span>
+              </span>
+              {% if task.is_completed and task.completed_date %}
+                <span style="font-size: 0.72rem; color: var(--success); font-weight: 600;">
+                  {{ task.completed_date|date:"M d, Y" }}
+                </span>
+              {% endif %}
+            </div>
+            {% empty %}
+            <div style="font-size: 0.82rem; color: var(--text-muted);">No checklist tasks listed.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); text-align: right;">
+          Last updated: {{ scp.updated_at|date:"M d, Y H:i" }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- SITE PHOTO STREAM / PROGRESS TIMELINE -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2>Verified Site Progress Photos</h2>
+        <p>Live photographic timeline of structural inspections and on-site construction milestones.</p>
+      </div>
+    </div>
+
+    <div class="gallery-grid">
+      {% for photo in photos %}
+      <div class="photo-card">
+        <div class="photo-card-img-wrap">
+          <a href="{{ photo.image.url }}" class="open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} ({{ photo.category.name|default:'General Site' }})">
+            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy">
+          </a>
+        </div>
+        <div class="photo-card-body">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="badge badge-ongoing" style="font-size: 0.7rem;">{{ photo.category.name|default:"General Build" }}</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">{{ photo.uploaded_at|date:"M d, Y" }}</span>
+            </div>
+            <div style="font-weight: 600; font-size: 0.92rem; color: var(--navy); line-height: 1.3;">{{ photo.caption }}</div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-muted);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📸</div>
+        <div style="font-weight: 600; color: var(--navy); margin-bottom: 4px;">Photo Stream Initializing</div>
+        <p>Your lead project engineer will upload daily verified site photos as inspection milestones are logged.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<style>
+  @media (max-width: 900px) {
+    .progress-charts-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/client_dashboard.js' %}"></script>
+{% endblock %}

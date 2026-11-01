@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | Structura CRM{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 780px; padding-top: 2.5rem; padding-bottom: 4rem;">
+  
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline btn-sm">
+      ← Back to Portfolio Dashboard
+    </a>
+  </div>
+
+  <div class="card" style="box-shadow: var(--shadow-md);">
+    <div class="card-header">
+      <div>
+        <h2>{{ title }}</h2>
+        <p style="margin-top: 4px;">Define project parameters, timeline, and client assignment.</p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+      <div class="alert alert-error">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_name">Project / Site Name *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.name.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" for="id_client" style="margin-bottom: 0;">Assigned Client / Homeowner *</label>
+            <button type="button" id="openClientModalBtn" class="btn btn-sm btn-amber" style="padding: 3px 10px; font-size: 0.78rem; font-weight: 700;">
+              + Quick Add New Client
+            </button>
+          </div>
+          {{ form.client }}
+          <div id="clientCreatedFeedback" style="display: none; color: var(--success); font-size: 0.82rem; font-weight: 600; margin-top: 4px;"></div>
+          {% if form.client.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.client.errors.0 }}</div>{% endif %}
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Only clients authorized here can view this project dashboard.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_status">Project Status *</label>
+          {{ form.status }}
+          {% if form.status.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.status.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_site_address">Site Physical Address *</label>
+        {{ form.site_address }}
+        {% if form.site_address.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.site_address.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="id_start_date">Groundbreaking / Start Date *</label>
+          {{ form.start_date }}
+          {% if form.start_date.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.start_date.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_estimated_completion_date">Estimated Handover Date *</label>
+          {{ form.estimated_completion_date }}
+          {% if form.estimated_completion_date.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.estimated_completion_date.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_project_manager">Lead Project Engineer / Architect *</label>
+        {{ form.project_manager }}
+        {% if form.project_manager.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.project_manager.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="background: var(--surface-subtle); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 1rem; margin-bottom: 1.5rem;">
+        <div style="font-weight: 700; font-size: 0.88rem; color: var(--navy); margin-bottom: 4px;">
+          ℹ Category & Subtask Automation Notice
+        </div>
+        <p style="font-size: 0.84rem; margin: 0; color: var(--text-secondary);">
+          Upon site creation, <strong>Building Work, Electrical Work, and Plumbing Work</strong> will be automatically enabled with their standard engineering checklists. Optional categories (Showcase Work, Wall Ceiling Work) will be initialized ready to be toggled.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save & Continue to Task Manager →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Quick Add Client Modal -->
+<div class="modal-overlay" id="quickClientModal">
+  <div class="modal-content" style="max-width: 540px; padding: 2rem; background: #fff;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="margin: 0; font-size: 1.25rem; color: var(--navy);">Register New Homeowner / Client</h3>
+      <button type="button" id="closeClientModalBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+    </div>
+
+    <div id="quickClientError" style="display: none; padding: 10px; background: var(--error-soft); color: var(--error); border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1rem;"></div>
+
+    <form id="quickClientForm">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+          <label class="form-label" style="font-size: 0.8rem;">First Name *</label>
+          <input type="text" id="qc_first_name" class="form-control" placeholder="e.g. Michael" required>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.8rem;">Last Name</label>
+          <input type="text" id="qc_last_name" class="form-control" placeholder="e.g. Scott">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label class="form-label" style="font-size: 0.8rem;">Username / Login ID *</label>
+        <input type="text" id="qc_username" class="form-control" placeholder="e.g. michael_scott" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+          <label class="form-label" style="font-size: 0.8rem;">Email Address</label>
+          <input type="email" id="qc_email" class="form-control" placeholder="client@domain.com">
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.8rem;">Phone Number</label>
+          <input type="text" id="qc_phone" class="form-control" placeholder="+1 (555) 000-0000">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label class="form-label" style="font-size: 0.8rem;">Initial Login Password *</label>
+        <input type="password" id="qc_password" class="form-control" placeholder="Initial client password" required>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">The client will use this password to access their tracker dashboard.</div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" id="cancelClientModalBtn" class="btn btn-outline btn-sm">Cancel</button>
+        <button type="submit" id="submitClientBtn" class="btn btn-primary btn-sm">Register & Select Client ✓</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('quickClientModal');
+  const openBtn = document.getElementById('openClientModalBtn');
+  const closeBtn = document.getElementById('closeClientModalBtn');
+  const cancelBtn = document.getElementById('cancelClientModalBtn');
+  const form = document.getElementById('quickClientForm');
+  const errorDiv = document.getElementById('quickClientError');
+  const feedbackDiv = document.getElementById('clientCreatedFeedback');
+  const clientSelect = document.getElementById('id_client');
+
+  function showModal() {
+    modal.classList.add('active');
+    errorDiv.style.display = 'none';
+  }
+
+  function hideModal() {
+    modal.classList.remove('active');
+  }
+
+  if (openBtn) openBtn.addEventListener('click', showModal);
+  if (closeBtn) closeBtn.addEventListener('click', hideModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorDiv.style.display = 'none';
+      const submitBtn = document.getElementById('submitClientBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
+
+      const payload = {
+        username: document.getElementById('qc_username').value.trim(),
+        first_name: document.getElementById('qc_first_name').value.trim(),
+        last_name: document.getElementById('qc_last_name').value.trim(),
+        email: document.getElementById('qc_email').value.trim(),
+        phone_number: document.getElementById('qc_phone').value.trim(),
+        password: document.getElementById('qc_password').value.trim(),
+      };
+
+      try {
+        const response = await fetch('/admin-portal/api/create-client/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          // Add new option to dropdown
+          const newOption = new Option(data.client.label, data.client.id, true, true);
+          clientSelect.add(newOption);
+          clientSelect.value = data.client.id;
+
+          // Feedback notice
+          feedbackDiv.textContent = `✓ Client "${data.client.name}" registered successfully and selected!`;
+          feedbackDiv.style.display = 'block';
+
+          // Reset form & hide modal
+          form.reset();
+          hideModal();
+        } else {
+          errorDiv.textContent = data.error || 'Failed to create client.';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = 'Server communication error. Please try again.';
+        errorDiv.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Register & Select Client ✓';
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+

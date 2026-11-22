@@ -46,6 +46,16 @@ urlpatterns = [
     # Client / Homeowner Routes
     path('client-portal/dashboard/', views.client_dashboard, name='client_dashboard'),
     path('client-portal/site/<int:site_id>/', views.client_site_detail, name='client_site_detail'),
+    path(
+        'client-portal/site/<int:site_id>/work/',
+        views.client_site_work,
+        name='client_site_work',
+    ),
+    path(
+        'client-portal/site/<int:site_id>/updates/',
+        views.client_site_updates,
+        name='client_site_updates',
+    ),
     path('client-portal/feedback/', views.client_feedback, name='client_feedback'),
 
     # Client Management Routes (Admin)

@@ -3,6 +3,66 @@ document.addEventListener('DOMContentLoaded', () => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const animationDuration = prefersReducedMotion ? 0 : 800;
 
+  const inspirationCarousel = document.querySelector('[data-inspiration-carousel]');
+  if (inspirationCarousel) {
+    const slides = Array.from(inspirationCarousel.querySelectorAll('[data-inspiration-slide]'));
+    const dots = Array.from(inspirationCarousel.querySelectorAll('[data-inspiration-index]'));
+    let activeSlide = 0;
+    let timer;
+    let isHovered = false;
+    let hasFocus = false;
+
+    const showSlide = (index) => {
+      activeSlide = (index + slides.length) % slides.length;
+      slides.forEach((slide, slideIndex) => {
+        const isActive = slideIndex === activeSlide;
+        slide.hidden = !isActive;
+        slide.setAttribute('aria-hidden', String(!isActive));
+      });
+      dots.forEach((dot, dotIndex) => {
+        dot.setAttribute('aria-current', String(dotIndex === activeSlide));
+      });
+    };
+
+    const startAutoplay = () => {
+      window.clearInterval(timer);
+      if (!prefersReducedMotion && !document.hidden && !isHovered && !hasFocus) {
+        timer = window.setInterval(() => showSlide(activeSlide + 1), 6500);
+      }
+    };
+
+    inspirationCarousel.querySelectorAll('[data-inspiration-step]').forEach((button) => {
+      button.addEventListener('click', () => {
+        showSlide(activeSlide + Number(button.dataset.inspirationStep));
+        startAutoplay();
+      });
+    });
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        showSlide(Number(dot.dataset.inspirationIndex));
+        startAutoplay();
+      });
+    });
+    inspirationCarousel.addEventListener('mouseenter', () => {
+      isHovered = true;
+      startAutoplay();
+    });
+    inspirationCarousel.addEventListener('mouseleave', () => {
+      isHovered = false;
+      startAutoplay();
+    });
+    inspirationCarousel.addEventListener('focusin', () => {
+      hasFocus = true;
+      startAutoplay();
+    });
+    inspirationCarousel.addEventListener('focusout', (event) => {
+      hasFocus = inspirationCarousel.contains(event.relatedTarget);
+      startAutoplay();
+    });
+    document.addEventListener('visibilitychange', startAutoplay);
+    startAutoplay();
+  }
+
   // 1. Overall Progress Donut Chart
   const donutCanvas = document.getElementById('overallProgressDonut');
   if (donutCanvas && window.Chart) {

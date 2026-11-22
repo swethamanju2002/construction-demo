@@ -317,6 +317,7 @@ def client_feedback(request):
             author=request.user
         ).select_related('site', 'update_notification'),
         'has_assigned_sites': assigned_sites.exists(),
+        'site': assigned_sites.first(),
         'client_active': 'feedback',
     })
 
@@ -646,18 +647,14 @@ def client_site_detail(request, site_id):
     Strict Zero-Trust validation:
     A client may ONLY access their own assigned construction project.
     """
-    site = get_object_or_404(
-        ConstructionSite.objects.select_related('client').prefetch_related(
+    site = _get_authorized_client_site(
+        request,
+        site_id,
+        prefetch_related=(
             'category_progresses__category',
             'category_progresses__tasks',
-            'update_images__category'
         ),
-        id=site_id
     )
-
-    # Server-side Zero-Trust Access Check
-    if site.client != request.user and not request.user.is_superuser:
-        raise PermissionDenied("Access Denied: You are not authorized to view this construction project.")
 
     overall_progress = site.calculate_overall_progress()
     remaining_progress = site.remaining_percentage
@@ -669,8 +666,6 @@ def client_site_detail(request, site_id):
     chart_category_labels = [cp.category.name for cp in enabled_categories]
     chart_category_data = [float(cp.progress_percentage) for cp in enabled_categories]
 
-    recent_photos = site.update_images.all()[:30]
-
     context = {
         'site': site,
         'overall_progress': float(overall_progress),
@@ -678,9 +673,53 @@ def client_site_detail(request, site_id):
         'enabled_categories': enabled_categories,
         'chart_category_labels_json': json.dumps(chart_category_labels),
         'chart_category_data_json': json.dumps(chart_category_data),
-        'photos': recent_photos,
+        'photo_count': site.update_images.count(),
     }
     return render(request, 'client_portal/dashboard.html', context)
+
+
+def _get_authorized_client_site(request, site_id, prefetch_related=()):
+    site = get_object_or_404(
+        ConstructionSite.objects.select_related('client').prefetch_related(
+            *prefetch_related
+        ),
+        id=site_id,
+    )
+    if site.client_id != request.user.id and not request.user.is_superuser:
+        raise PermissionDenied(
+            "Access Denied: You are not authorized to view this construction project."
+        )
+    return site
+
+
+@client_required
+def client_site_work(request, site_id):
+    site = _get_authorized_client_site(
+        request,
+        site_id,
+        prefetch_related=('category_progresses__category', 'category_progresses__tasks'),
+    )
+    return render(request, 'client_portal/work.html', {
+        'site': site,
+        'enabled_categories': site.category_progresses.filter(is_enabled=True),
+        'client_active': 'work',
+    })
+
+
+@client_required
+def client_site_updates(request, site_id):
+    site = _get_authorized_client_site(
+        request,
+        site_id,
+        prefetch_related=('update_images__category',),
+    )
+    photos = list(site.update_images.all()[:30])
+    return render(request, 'client_portal/updates.html', {
+        'site': site,
+        'photos': photos,
+        'photo_count': site.update_images.count(),
+        'client_active': 'updates',
+    })
 
 
 # ==============================================================================

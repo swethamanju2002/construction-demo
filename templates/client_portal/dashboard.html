@@ -10,6 +10,7 @@
 <div class="client-portal-shell">
   {% with client_active='dashboard' %}{% include 'includes/client_sidebar.html' %}{% endwith %}
   <div class="client-workspace">
+    {% include 'includes/client_topbar.html' %}
 <div class="client-portal">
   <section class="client-project-hero">
     <div class="container client-project-hero-inner">
@@ -57,51 +58,55 @@
       </div>
     </section>
 
-    <section class="client-work-section">
-      <div class="client-section-title"><div><span class="client-section-kicker">The detail behind the number</span><h2>Work stream updates</h2><p>View the task records contributing to your project progress.</p></div></div>
-      <div class="client-work-grid">
-        {% for scp in enabled_categories %}
-        <article class="client-work-card">
-          <header class="client-work-card-header">
-            <span class="client-work-icon">{% if scp.category.slug == 'electrical-work' %}⚡{% elif scp.category.slug == 'plumbing-work' %}⌁{% elif scp.category.slug == 'showcase-work' %}▤{% elif scp.category.slug == 'wall-ceiling-work' %}▥{% else %}⌂{% endif %}</span>
-            <div><h3>{{ scp.category.name }}</h3><span class="badge {% if scp.progress_percentage == 100 %}badge-completed{% else %}badge-ongoing{% endif %}">{% if scp.progress_percentage == 100 %}Complete{% else %}In progress{% endif %}</span></div>
-            <strong class="client-work-percent">{{ scp.progress_percentage }}%</strong>
-          </header>
-          <div class="client-work-progress"><div style="width: {{ scp.progress_percentage }}%;"></div></div>
-          <div class="client-work-summary"><span>Checklist</span><strong>{{ scp.completed_tasks_count }} of {{ scp.total_tasks_count }} complete</strong></div>
-          <div class="client-task-list">
-            {% for task in scp.tasks.all %}
-            <div class="client-task-row {% if task.is_completed %}done{% endif %}">
-              <span class="client-task-check">{% if task.is_completed %}✓{% else %}·{% endif %}</span>
-              <span>{{ task.task_name }}</span>
-              {% if task.is_completed and task.completed_date %}<time>{{ task.completed_date|date:"M d" }}</time>{% endif %}
-            </div>
-            {% empty %}<p class="client-no-tasks">No task details are available for this category yet.</p>{% endfor %}
-          </div>
-          <footer class="client-work-updated">Last updated {{ scp.updated_at|date:"M d, Y" }}</footer>
-        </article>
-        {% empty %}
-        <div class="client-empty-panel"><h3>No active work streams</h3><p>Your project team will update this area when categories are enabled.</p></div>
-        {% endfor %}
-      </div>
-    </section>
-
-    <section class="client-updates-section">
-      <div class="client-section-title"><div><span class="client-section-kicker">From your site team</span><h2>Construction photo updates</h2><p>Recent visual updates shared by your project team.</p></div></div>
-      <div class="client-photo-grid">
-        {% for photo in photos %}
-        <article class="client-photo-card">
-          <a href="{{ photo.image.url }}" class="client-photo-image open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} — {{ photo.category.name|default:'General Site' }}">
-            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy"><span aria-hidden="true">↗</span>
-          </a>
-          <div class="client-photo-info"><div><span>{{ photo.category.name|default:"General Site" }}</span><time>{{ photo.uploaded_at|date:"M d, Y" }}</time></div><strong>{{ photo.caption }}</strong></div>
-        </article>
-        {% empty %}
-        <div class="client-empty-panel client-photo-empty"><span aria-hidden="true">▧</span><h3>No photos shared yet</h3><p>Your project lead will post photo updates here as the work progresses.</p></div>
-        {% endfor %}
+    <section class="client-shortcuts" aria-labelledby="clientUpdatesTitle">
+      <div class="client-section-title"><div><span class="client-section-kicker">Stay up to date</span><h2 id="clientUpdatesTitle">Project updates</h2><p>Open a dedicated view for work checklists or the latest site photos.</p></div></div>
+      <div class="client-shortcut-grid">
+        <a class="client-shortcut-card" href="{% url 'projects:client_site_work' site.id %}">
+          <span class="client-shortcut-icon">▥</span>
+          <span><strong>Work progress</strong><small>{{ enabled_categories|length }} active work categories</small></span>
+          <b aria-hidden="true">→</b>
+        </a>
+        <a class="client-shortcut-card" href="{% url 'projects:client_site_updates' site.id %}">
+          <span class="client-shortcut-icon photo">▧</span>
+          <span><strong>Photo updates</strong><small>{{ photo_count }} site photos shared</small></span>
+          <b aria-hidden="true">→</b>
+        </a>
       </div>
     </section>
   </main>
+  <section class="client-inspiration-panel" aria-label="Design inspiration">
+    <div class="client-inspiration-copy">
+      <span class="client-section-kicker">A first look at what’s possible</span>
+      <h3>Design inspiration</h3>
+      <p>Explore a few finished-building and interior ideas alongside your project updates. These are examples only—not photos of your site.</p>
+      <span class="client-inspiration-note"><i aria-hidden="true"></i>Inspiration preview · Your construction photos remain in project updates</span>
+    </div>
+    <div class="client-inspiration-carousel" data-inspiration-carousel role="region" aria-roledescription="carousel" aria-label="Design inspiration">
+      <div class="client-inspiration-stage" aria-live="off">
+        <article class="client-inspiration-slide" data-inspiration-slide aria-hidden="false" aria-label="1 of 3">
+          <img src="{% static 'images/design-inspiration/finished-home.webp' %}" alt="Completed modern home with a landscaped front yard" loading="lazy">
+          <div><span>EXTERIOR DESIGN</span><strong>Finished home ideas</strong></div>
+        </article>
+        <article class="client-inspiration-slide" data-inspiration-slide aria-hidden="true" aria-label="2 of 3" hidden>
+          <img src="{% static 'images/design-inspiration/wall-ceiling.webp' %}" alt="Bright contemporary living room with finished walls and ceiling" loading="lazy">
+          <div><span>WALL &amp; CEILING</span><strong>Interior finish ideas</strong></div>
+        </article>
+        <article class="client-inspiration-slide" data-inspiration-slide aria-hidden="true" aria-label="3 of 3" hidden>
+          <img src="{% static 'images/design-inspiration/interior-finishes.webp' %}" alt="Modern interior with warm materials and detailed finishes" loading="lazy">
+          <div><span>INTERIOR DETAILS</span><strong>Finishing touches</strong></div>
+        </article>
+      </div>
+      <div class="client-inspiration-controls">
+        <button type="button" data-inspiration-step="-1" aria-label="Previous inspiration image">←</button>
+        <div class="client-inspiration-dots">
+          <button type="button" data-inspiration-index="0" aria-label="Show image 1 of 3" aria-current="true"></button>
+          <button type="button" data-inspiration-index="1" aria-label="Show image 2 of 3" aria-current="false"></button>
+          <button type="button" data-inspiration-index="2" aria-label="Show image 3 of 3" aria-current="false"></button>
+        </div>
+        <button type="button" data-inspiration-step="1" aria-label="Next inspiration image">→</button>
+      </div>
+    </div>
+  </section>
 </div>
 
     <div class="feedback-prompt-overlay" data-feedback-modal hidden role="dialog" aria-modal="true" aria-labelledby="feedbackPromptTitle">
@@ -131,6 +136,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/client_dashboard.js' %}"></script>
+<script src="{% static 'js/client_dashboard.js' %}?v=20261122-inspiration"></script>
 <script src="{% static 'js/client_feedback.js' %}?v=20261122-feedback"></script>
 {% endblock %}

@@ -306,9 +306,101 @@ class PortalPageRenderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'client-project-hero')
         self.assertContains(response, 'data-notification-center')
+        self.assertLess(
+            response.content.index(b'class="client-topbar"'),
+            response.content.index(b'data-notification-center'),
+        )
         self.assertContains(response, self.site.name)
         self.assertContains(response, 'overallProgressDonut')
         self.assertNotContains(response, 'task-toggle-checkbox')
+
+    def test_client_dashboard_shows_inspiration_at_bottom_without_photos(self):
+        self.client.force_login(self.client_user)
+        response = self.client.get('/client-portal/dashboard/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-inspiration-carousel')
+        self.assertContains(response, 'Finished home ideas')
+        self.assertContains(response, 'WALL &amp; CEILING')
+        self.assertGreater(
+            response.content.index(b'data-inspiration-carousel'),
+            response.content.index(b'class="client-shortcuts"'),
+        )
+        self.assertContains(response, 'Photo updates')
+        self.assertNotContains(response, 'No photos shared yet')
+
+    def test_client_dashboard_links_to_separate_work_and_photo_pages(self):
+        building = self.site.category_progresses.get(
+            category__slug='building-work'
+        )
+        task = building.tasks.first()
+        task.is_completed = True
+        task.save()
+
+        self.client.force_login(self.client_user)
+        response = self.client.get('/client-portal/dashboard/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-inspiration-carousel')
+        self.assertContains(response, f'/client-portal/site/{self.site.id}/work/')
+        self.assertContains(response, f'/client-portal/site/{self.site.id}/updates/')
+        self.assertNotContains(response, 'Basement')
+        self.assertNotContains(response, 'class="client-photo-card"')
+
+    def test_work_and_photo_updates_render_on_separate_pages(self):
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                ProjectUpdateImage.objects.create(
+                    site=self.site,
+                    caption='Foundation preparation',
+                    image=SimpleUploadedFile(
+                        'foundation.jpg',
+                        b'not-a-real-image',
+                        content_type='image/jpeg',
+                    ),
+                )
+                self.client.force_login(self.client_user)
+                dashboard_response = self.client.get(
+                    '/client-portal/dashboard/',
+                    follow=True,
+                )
+                work_response = self.client.get(
+                    f'/client-portal/site/{self.site.id}/work/'
+                )
+                updates_response = self.client.get(
+                    f'/client-portal/site/{self.site.id}/updates/'
+                )
+
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertNotContains(dashboard_response, 'Foundation preparation')
+        self.assertEqual(work_response.status_code, 200)
+        self.assertContains(work_response, 'Building Work')
+        self.assertContains(work_response, 'Basement')
+        self.assertContains(work_response, 'Work progress')
+        self.assertEqual(updates_response.status_code, 200)
+        self.assertContains(updates_response, 'Foundation preparation')
+        self.assertContains(updates_response, 'client-photo-card')
+
+    def test_client_cannot_access_another_sites_work_or_photo_updates(self):
+        another_client = User.objects.create_user(
+            username='anotherportalclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        another_site = ConstructionSite.objects.create(
+            name='Private Client Site',
+            client=another_client,
+            site_address='20 Private Street',
+            start_date=timezone.now().date(),
+            estimated_completion_date=timezone.now().date() + timezone.timedelta(days=90),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+        self.client.force_login(self.client_user)
+
+        for page in ('work', 'updates'):
+            with self.subTest(page=page):
+                response = self.client.get(
+                    f'/client-portal/site/{another_site.id}/{page}/'
+                )
+                self.assertEqual(response.status_code, 403)
 
     def test_unassigned_client_sees_portal_pending_state(self):
         unassigned_client = User.objects.create_user(

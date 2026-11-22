@@ -4,7 +4,6 @@
       <span class="client-sidebar-mark">S</span>
       <span><strong>STRUCTURA</strong><small>CLIENT PORTAL</small></span>
     </a>
-    {% include 'includes/notification_center.html' %}
   </div>
   <div class="client-sidebar-user">
     <span class="client-sidebar-avatar">{{ user.first_name|first|default:user.username|first|upper }}</span>
@@ -14,8 +13,18 @@
     <span class="client-sidebar-label">WORKSPACE</span>
     <a href="{% url 'projects:client_dashboard' %}" class="{% if client_active == 'dashboard' %}active{% endif %}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-12h8V3h-8z"/></svg>
-      <span>My Project</span>
+      <span>Overview</span>
     </a>
+    {% if site %}
+      <a href="{% url 'projects:client_site_work' site.id %}" class="{% if client_active == 'work' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7"/></svg>
+        <span>Work progress</span>
+      </a>
+      <a href="{% url 'projects:client_site_updates' site.id %}" class="{% if client_active == 'updates' %}active{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-5-5L5 20"/></svg>
+        <span>Photo updates</span>
+      </a>
+    {% endif %}
     <a href="{% url 'projects:client_feedback' %}" class="{% if client_active == 'feedback' %}active{% endif %}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4V5zM8 9h8M8 13h5"/></svg>
       <span>My Feedback</span>

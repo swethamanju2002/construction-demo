@@ -1,0 +1,13 @@
+<header class="client-topbar">
+  <div class="client-topbar-title">
+    <strong>Client Portal</strong>
+    {% if site %}<span>{{ site.name }}</span>{% endif %}
+  </div>
+  <div class="client-topbar-actions">
+    {% include 'includes/notification_center.html' %}
+    <div class="client-topbar-profile">
+      <span class="client-topbar-avatar">{{ user.first_name|first|default:user.username|first|upper }}</span>
+      <span><strong>{{ user.get_full_name|default:user.username }}</strong><small>Project client</small></span>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Work Progress | {{ site.name }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="client-portal-shell">
+  {% include 'includes/client_sidebar.html' with client_active='work' %}
+  <div class="client-workspace client-detail-workspace">
+    {% include 'includes/client_topbar.html' %}
+    <main class="client-detail-page">
+      <header class="client-detail-heading">
+        <span class="client-section-kicker">Project checklist</span>
+        <h1>Work progress</h1>
+        <p>Track progress and completed tasks across the active work categories for {{ site.name }}.</p>
+        <a href="{% url 'projects:client_site_detail' site.id %}" class="client-detail-back">← Back to project overview</a>
+      </header>
+
+      <section class="client-work-section" aria-label="Work category progress">
+        <div class="client-work-grid">
+          {% for scp in enabled_categories %}
+            <article class="client-work-card">
+              <header class="client-work-card-header">
+                <span class="client-work-icon">{% if scp.category.slug == 'electrical-work' %}⚡{% elif scp.category.slug == 'plumbing-work' %}⌁{% elif scp.category.slug == 'showcase-work' %}▤{% elif scp.category.slug == 'wall-ceiling-work' %}▥{% else %}⌂{% endif %}</span>
+                <div><h2>{{ scp.category.name }}</h2><span class="badge {% if scp.progress_percentage == 100 %}badge-completed{% else %}badge-ongoing{% endif %}">{% if scp.progress_percentage == 100 %}Complete{% else %}In progress{% endif %}</span></div>
+                <strong class="client-work-percent">{{ scp.progress_percentage }}%</strong>
+              </header>
+              <div class="client-work-progress"><div style="width: {{ scp.progress_percentage }}%;"></div></div>
+              <div class="client-work-summary"><span>Checklist</span><strong>{{ scp.completed_tasks_count }} of {{ scp.total_tasks_count }} complete</strong></div>
+              <div class="client-task-list">
+                {% for task in scp.tasks.all %}
+                  <div class="client-task-row {% if task.is_completed %}done{% endif %}">
+                    <span class="client-task-check">{% if task.is_completed %}✓{% else %}·{% endif %}</span>
+                    <span>{{ task.task_name }}</span>
+                    {% if task.is_completed and task.completed_date %}<time>{{ task.completed_date|date:"M d" }}</time>{% endif %}
+                  </div>
+                {% empty %}
+                  <p class="client-no-tasks">No task details are available for this category yet.</p>
+                {% endfor %}
+              </div>
+              <footer class="client-work-updated">Last updated {{ scp.updated_at|date:"M d, Y" }}</footer>
+            </article>
+          {% empty %}
+            <div class="client-empty-panel"><h2>No active work streams</h2><p>Your project team will update this area when categories are enabled.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}

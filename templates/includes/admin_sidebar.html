@@ -1,11 +1,14 @@
 <aside class="admin-sidebar" id="adminSidebar">
   <a href="{% url 'projects:admin_dashboard' %}" class="admin-brand">
-    <span class="admin-brand-mark">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 11h2v3H9zm4 0h2v3h-2zm-4 6h6v4H9z"/></svg>
-    </span>
-    <span class="admin-brand-copy"><strong>STRUCTURA</strong><small>CRM</small></span>
+    <span class="client-sidebar-mark" aria-hidden="true">S</span>
+    <span class="client-sidebar-brand-copy"><strong>STRUCTURA</strong><small>ADMIN PORTAL</small></span>
   </a>
+  <div class="admin-sidebar-user">
+    <span class="client-sidebar-avatar">{{ user.first_name|first|default:user.username|first|upper }}</span>
+    <span><strong>{{ user.get_full_name|default:user.username }}</strong><small>Administrator</small></span>
+  </div>
   <nav class="admin-nav" aria-label="Administrator navigation">
+    <span class="client-sidebar-label">WORKSPACE</span>
     <a href="{% url 'projects:admin_dashboard' %}" class="admin-nav-link {% if admin_active == 'dashboard' %}active{% endif %}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-12h8V3h-8z"/></svg>
       <span>Dashboard</span>

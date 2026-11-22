@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Photo Updates | {{ site.name }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="client-portal-shell">
+  {% include 'includes/client_sidebar.html' with client_active='updates' %}
+  <div class="client-workspace client-detail-workspace">
+    {% include 'includes/client_topbar.html' %}
+    <main class="client-detail-page">
+      <header class="client-detail-heading">
+        <span class="client-section-kicker">From your site team</span>
+        <h1>Photo updates</h1>
+        <p>Construction photos shared for {{ site.name }}. Select a photo to view it at full size.</p>
+        <a href="{% url 'projects:client_site_detail' site.id %}" class="client-detail-back">← Back to project overview</a>
+      </header>
+
+      <section class="client-updates-section" aria-label="Construction photo updates">
+        {% if photo_count > 30 %}<p class="client-photo-count">Showing the 30 most recent of {{ photo_count }} photos.</p>{% endif %}
+        <div class="client-photo-grid">
+          {% for photo in photos %}
+            <article class="client-photo-card">
+              <a href="{{ photo.image.url }}" class="client-photo-image open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} — {{ photo.category.name|default:'General Site' }}">
+                <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy"><span aria-hidden="true">↗</span>
+              </a>
+              <div class="client-photo-info"><div><span>{{ photo.category.name|default:"General Site" }}</span><time>{{ photo.uploaded_at|date:"M d, Y" }}</time></div><strong>{{ photo.caption }}</strong></div>
+            </article>
+          {% empty %}
+            <div class="client-empty-panel client-photo-empty"><span aria-hidden="true">▧</span><h2>No photos shared yet</h2><p>Your project lead will post photo updates here as the work progresses.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+<div class="notification-center" data-notification-center
+     data-api-url="{% url 'projects:api_notifications' %}"
+     data-read-url="{% url 'projects:api_mark_notification_read' %}"
+     data-read-all-url="{% url 'projects:api_mark_all_notifications_read' %}">
+  <button type="button" class="notification-toggle" data-notification-toggle
+          aria-label="Notifications" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+    </svg>
+    <span class="notification-count" data-notification-count hidden></span>
+  </button>
+  <section class="notification-menu" data-notification-menu hidden aria-label="Notifications">
+    <header class="notification-menu-header">
+      <div><strong>Notifications</strong><small data-notification-summary>Updates for your portal</small></div>
+      <button type="button" data-notification-read-all>Mark all read</button>
+    </header>
+    <div class="notification-items" data-notification-items aria-live="polite">
+      <p class="notification-empty">Loading notifications…</p>
+    </div>
+  </section>
+</div>

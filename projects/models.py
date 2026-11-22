@@ -259,3 +259,58 @@ class SiteProgressHistory(models.Model):
     def __str__(self):
         return f"{self.site.name} at {self.overall_progress}% on {self.recorded_at.strftime('%Y-%m-%d %H:%M')}"
 
+
+class Notification(models.Model):
+    KIND_TASK_PROGRESS = 'task_progress'
+    KIND_PROJECT_UPDATE = 'project_update'
+    KIND_SITE_STATUS = 'site_status'
+    KIND_SCHEDULE_CHANGE = 'schedule_change'
+    KIND_DUE_DATE = 'due_date'
+    KIND_SITE_ALERT = 'site_alert'
+    KIND_CONTACT_INQUIRY = 'contact_inquiry'
+
+    KIND_CHOICES = [
+        (KIND_TASK_PROGRESS, 'Task and progress update'),
+        (KIND_PROJECT_UPDATE, 'Project update'),
+        (KIND_SITE_STATUS, 'Project status'),
+        (KIND_SCHEDULE_CHANGE, 'Schedule change'),
+        (KIND_DUE_DATE, 'Due date reminder'),
+        (KIND_SITE_ALERT, 'Site alert or milestone'),
+        (KIND_CONTACT_INQUIRY, 'Contact inquiry'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    site = models.ForeignKey(
+        ConstructionSite,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    kind = models.CharField(max_length=32, choices=KIND_CHOICES)
+    title = models.CharField(max_length=180)
+    message = models.TextField()
+    url = models.CharField(max_length=500, blank=True)
+    event_key = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipient', 'event_key'],
+                name='unique_recipient_notification_event',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['recipient', 'read_at', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.recipient.username})"
+

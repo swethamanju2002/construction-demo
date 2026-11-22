@@ -29,6 +29,9 @@
     <!-- Action Buttons -->
     <div class="nav-actions">
       {% if user.is_authenticated %}
+        {% if user.is_site_admin or user.is_superuser or user.is_client %}
+          {% include 'includes/notification_center.html' %}
+        {% endif %}
         <span style="color: rgba(255,255,255,0.85); font-size: 0.88rem; display: flex; align-items: center; gap: 8px;">
           <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
           <strong>{{ user.first_name|default:user.username }}</strong>

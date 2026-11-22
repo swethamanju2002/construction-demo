@@ -9,6 +9,18 @@ urlpatterns = [
     path('admin-portal/site/create/', views.admin_site_create, name='admin_site_create'),
     path('admin-portal/site/<int:site_id>/', views.admin_site_detail, name='admin_site_detail'),
     path('admin-portal/site/<int:site_id>/edit/', views.admin_site_edit, name='admin_site_edit'),
+    path('admin-portal/inquiries/', views.admin_inquiries, name='admin_inquiries'),
+    path('admin-portal/api/notifications/', views.api_notifications, name='api_notifications'),
+    path(
+        'admin-portal/api/notifications/read/',
+        views.api_mark_notification_read,
+        name='api_mark_notification_read',
+    ),
+    path(
+        'admin-portal/api/notifications/read-all/',
+        views.api_mark_all_notifications_read,
+        name='api_mark_all_notifications_read',
+    ),
     
     # Dynamic APIs (AJAX & Form Fallback)
     path('admin-portal/api/toggle-task/', views.api_toggle_task, name='api_toggle_task'),

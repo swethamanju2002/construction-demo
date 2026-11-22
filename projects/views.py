@@ -2,24 +2,29 @@ import json
 from decimal import Decimal
 from datetime import date
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Avg
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
 from accounts.models import User
 from accounts.forms import ClientCreationForm
 from accounts.permissions import site_admin_required, client_required
+from core.models import ContactInquiry
 from .forms import ConstructionSiteForm, ProjectUpdateImageForm
 from .models import (
     ConstructionSite,
+    Notification,
     WorkCategory,
     SiteCategoryProgress,
     SiteTask,
     ProjectUpdateImage,
     SiteProgressHistory,
 )
+from .notifications import sync_scheduled_notifications
 
 
 # ==============================================================================
@@ -195,6 +200,102 @@ def admin_site_detail(request, site_id):
         'photos': site.update_images.all()[:30],
     }
     return render(request, 'admin_portal/site_detail.html', context)
+
+
+@site_admin_required
+def admin_inquiries(request):
+    if request.method == 'POST':
+        inquiry_id = request.POST.get('inquiry_id')
+        inquiry = get_object_or_404(ContactInquiry, pk=inquiry_id)
+        inquiry.is_addressed = request.POST.get('is_addressed') == 'true'
+        inquiry.save(update_fields=['is_addressed'])
+        messages.success(
+            request,
+            'Inquiry status updated.',
+        )
+        return redirect(f"{reverse('projects:admin_inquiries')}#inquiry-{inquiry.id}")
+
+    status_filter = request.GET.get('status', 'open')
+    inquiries = ContactInquiry.objects.all()
+    if status_filter == 'open':
+        inquiries = inquiries.filter(is_addressed=False)
+    elif status_filter == 'addressed':
+        inquiries = inquiries.filter(is_addressed=True)
+    else:
+        status_filter = 'all'
+    return render(request, 'admin_portal/inquiries.html', {
+        'inquiries': inquiries,
+        'inquiry_status_filter': status_filter,
+        'admin_active': 'inquiries',
+    })
+
+
+@login_required
+@require_GET
+def api_notifications(request):
+    user = request.user
+    if not (
+        user.is_site_admin or user.is_superuser or user.is_client
+    ):
+        raise PermissionDenied('Notifications are available to portal users only.')
+
+    sync_scheduled_notifications(user)
+    notifications = list(
+        Notification.objects.filter(recipient=user)
+        .select_related('site')[:30]
+    )
+    unread_count = Notification.objects.filter(
+        recipient=user,
+        read_at__isnull=True,
+    ).count()
+    return JsonResponse({
+        'unread_count': unread_count,
+        'notifications': [
+            {
+                'id': item.id,
+                'kind': item.kind,
+                'title': item.title,
+                'message': item.message,
+                'url': item.url,
+                'created_at': item.created_at.isoformat(),
+                'is_read': item.read_at is not None,
+            }
+            for item in notifications
+        ],
+    })
+
+
+@login_required
+@require_POST
+def api_mark_notification_read(request):
+    user = request.user
+    if not (user.is_site_admin or user.is_superuser or user.is_client):
+        raise PermissionDenied('Notifications are available to portal users only.')
+    notification_id = request.POST.get('notification_id')
+    if not notification_id:
+        return HttpResponseBadRequest('notification_id is required')
+    notification = get_object_or_404(
+        Notification,
+        id=notification_id,
+        recipient=user,
+    )
+    if notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=['read_at'])
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def api_mark_all_notifications_read(request):
+    user = request.user
+    if not (user.is_site_admin or user.is_superuser or user.is_client):
+        raise PermissionDenied('Notifications are available to portal users only.')
+    Notification.objects.filter(
+        recipient=user,
+        read_at__isnull=True,
+    ).update(read_at=timezone.now())
+    return JsonResponse({'success': True})
 
 
 # ==============================================================================

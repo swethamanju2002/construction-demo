@@ -1,8 +1,21 @@
 from decimal import Decimal
+from datetime import timedelta
+from tempfile import TemporaryDirectory
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.test import TestCase
 from django.utils import timezone
 from accounts.models import User
-from projects.models import ConstructionSite, WorkCategory, SiteCategoryProgress, SiteTask
+from core.models import ContactInquiry
+from projects.models import (
+    ConstructionSite,
+    Notification,
+    ProjectUpdateImage,
+    WorkCategory,
+    SiteCategoryProgress,
+    SiteTask,
+)
 from projects.forms import ConstructionSiteForm
 
 
@@ -264,6 +277,7 @@ class PortalPageRenderingTests(TestCase):
             f'/admin-portal/site/{self.site.id}/edit/',
             '/admin-portal/clients/',
             '/admin-portal/clients/create/',
+            '/admin-portal/inquiries/',
         ]
         for path in paths:
             with self.subTest(path=path):
@@ -271,6 +285,7 @@ class PortalPageRenderingTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, 'adminSidebar')
                 self.assertContains(response, 'adminMenuToggle')
+                self.assertContains(response, 'data-notification-center')
 
     def test_client_directory_site_assignment_prefills_client(self):
         self.client.force_login(self.admin)
@@ -288,6 +303,7 @@ class PortalPageRenderingTests(TestCase):
         response = self.client.get('/client-portal/dashboard/', follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'client-project-hero')
+        self.assertContains(response, 'data-notification-center')
         self.assertContains(response, self.site.name)
         self.assertContains(response, 'overallProgressDonut')
         self.assertNotContains(response, 'task-toggle-checkbox')
@@ -302,4 +318,183 @@ class PortalPageRenderingTests(TestCase):
         response = self.client.get('/client-portal/dashboard/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'client-unassigned-page')
+
+
+class NotificationTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='notificationadmin',
+            password='PortalPassword123!',
+            is_site_admin=True,
+        )
+        self.client_user = User.objects.create_user(
+            username='notificationclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.other_client = User.objects.create_user(
+            username='othernotificationclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.site = ConstructionSite.objects.create(
+            name='Notification Test Site',
+            client=self.client_user,
+            site_address='20 Notification Road',
+            start_date=timezone.localdate(),
+            estimated_completion_date=timezone.localdate() + timedelta(days=90),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+
+    def test_progress_photo_status_schedule_and_inquiry_events(self):
+        building = self.site.category_progresses.get(
+            category__slug='building-work'
+        )
+        task = building.tasks.first()
+        task.is_completed = True
+        task.save()
+        building.refresh_from_db()
+        progress_notice = Notification.objects.get(
+            recipient=self.client_user,
+            kind=Notification.KIND_TASK_PROGRESS,
+            site=self.site,
+        )
+        self.assertIn('25.00%', progress_notice.message)
+
+        self.site.status = ConstructionSite.STATUS_ON_HOLD
+        self.site.estimated_completion_date += timedelta(days=5)
+        self.site.save()
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.client_user,
+            kind=Notification.KIND_SITE_STATUS,
+            site=self.site,
+        ).exists())
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.client_user,
+            kind=Notification.KIND_SCHEDULE_CHANGE,
+            site=self.site,
+        ).exists())
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.admin,
+            kind=Notification.KIND_SITE_ALERT,
+            site=self.site,
+        ).exists())
+
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                ProjectUpdateImage.objects.create(
+                    site=self.site,
+                    caption='Foundation progress',
+                    image=SimpleUploadedFile(
+                        'foundation.jpg',
+                        b'not-a-real-image',
+                        content_type='image/jpeg',
+                    ),
+                )
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.client_user,
+            kind=Notification.KIND_PROJECT_UPDATE,
+            title='New site photo update',
+            site=self.site,
+        ).exists())
+
+        ContactInquiry.objects.create(
+            name='Prospective Client',
+            email='prospect@example.com',
+            subject='New home build',
+            message='Please contact me about a project.',
+        )
+        inquiry_notice = Notification.objects.get(
+            recipient=self.admin,
+            kind=Notification.KIND_CONTACT_INQUIRY,
+        )
+        self.assertIn('/admin-portal/inquiries/#inquiry-', inquiry_notice.url)
+        self.client.force_login(self.admin)
+        response = self.client.get('/admin-portal/inquiries/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Prospective Client')
+
+    def test_notification_feed_is_private_and_read_state_persists(self):
+        client_notice = Notification.objects.create(
+            recipient=self.client_user,
+            site=self.site,
+            kind=Notification.KIND_PROJECT_UPDATE,
+            title='Client only update',
+            message='A private client message',
+            event_key='client-private',
+        )
+        Notification.objects.create(
+            recipient=self.admin,
+            site=self.site,
+            kind=Notification.KIND_SITE_ALERT,
+            title='Admin only update',
+            message='A private admin message',
+            event_key='admin-private',
+        )
+
+        self.client.force_login(self.client_user)
+        feed = self.client.get('/admin-portal/api/notifications/')
+        self.assertEqual(feed.status_code, 200)
+        self.assertContains(feed, 'Client only update')
+        self.assertNotContains(feed, 'Admin only update')
+        read_response = self.client.post(
+            '/admin-portal/api/notifications/read/',
+            {'notification_id': client_notice.id},
+        )
+        self.assertEqual(read_response.status_code, 200)
+        client_notice.refresh_from_db()
+        self.assertIsNotNone(client_notice.read_at)
+
+        self.client.force_login(self.other_client)
+        unauthorized_read = self.client.post(
+            '/admin-portal/api/notifications/read/',
+            {'notification_id': client_notice.id},
+        )
+        self.assertEqual(unauthorized_read.status_code, 404)
+        client_notice.refresh_from_db()
+        self.assertIsNotNone(client_notice.read_at)
+
+    def test_due_date_alerts_are_created_once_on_feed_refresh(self):
+        self.site.estimated_completion_date = timezone.localdate() + timedelta(days=3)
+        self.site.save(update_fields=['estimated_completion_date'])
+        self.client.force_login(self.client_user)
+        for _ in range(2):
+            response = self.client.get('/admin-portal/api/notifications/')
+            self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Notification.objects.filter(
+                recipient=self.client_user,
+                kind=Notification.KIND_DUE_DATE,
+            ).count(),
+            1,
+        )
+
+        self.site.estimated_completion_date = timezone.localdate() - timedelta(days=1)
+        self.site.save(update_fields=['estimated_completion_date'])
+        self.client.force_login(self.client_user)
+        missed_date_response = self.client.get('/admin-portal/api/notifications/')
+        self.assertEqual(missed_date_response.status_code, 200)
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.client_user,
+            kind=Notification.KIND_DUE_DATE,
+            title='Estimated completion date passed',
+        ).exists())
+
+        self.client.force_login(self.admin)
+        for _ in range(2):
+            response = self.client.get('/admin-portal/api/notifications/')
+            self.assertEqual(response.status_code, 200)
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.admin,
+            kind=Notification.KIND_SITE_ALERT,
+            title='Project past estimated completion',
+        ).exists())
+        self.assertEqual(
+            Notification.objects.filter(
+                recipient=self.admin,
+                kind=Notification.KIND_SITE_ALERT,
+                title='Project past estimated completion',
+            ).count(),
+            1,
+        )
 

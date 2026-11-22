@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Inquiries | Structura CRM{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+  {% with admin_active='inquiries' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main">
+      <section class="admin-hero">
+        <div class="admin-hero-content">
+          <span class="admin-eyebrow">Client communications</span>
+          <h1>Contact inquiries</h1>
+          <p>Review and track messages submitted through the public contact form.</p>
+        </div>
+      </section>
+
+      <nav class="inquiry-filters" aria-label="Filter inquiries">
+        <a href="?status=open" class="{% if inquiry_status_filter == 'open' %}active{% endif %}">Open</a>
+        <a href="?status=addressed" class="{% if inquiry_status_filter == 'addressed' %}active{% endif %}">Addressed</a>
+        <a href="?status=all" class="{% if inquiry_status_filter == 'all' %}active{% endif %}">All inquiries</a>
+      </nav>
+
+      <section class="inquiry-list" aria-label="Contact inquiries">
+        {% for inquiry in inquiries %}
+          <article class="inquiry-card" id="inquiry-{{ inquiry.id }}">
+            <header>
+              <div>
+                <span class="admin-eyebrow navy">{{ inquiry.created_at|date:"M d, Y · g:i A" }}</span>
+                <h2>{{ inquiry.subject }}</h2>
+                <p class="inquiry-sender">{{ inquiry.name }} · <a href="mailto:{{ inquiry.email }}">{{ inquiry.email }}</a>{% if inquiry.phone %} · {{ inquiry.phone }}{% endif %}</p>
+              </div>
+              <span class="inquiry-status {% if inquiry.is_addressed %}addressed{% endif %}">
+                {% if inquiry.is_addressed %}Addressed{% else %}Needs follow-up{% endif %}
+              </span>
+            </header>
+            <p class="inquiry-message">{{ inquiry.message|linebreaksbr }}</p>
+            <form method="post" class="inquiry-action">
+              {% csrf_token %}
+              <input type="hidden" name="inquiry_id" value="{{ inquiry.id }}">
+              <input type="hidden" name="is_addressed" value="{% if inquiry.is_addressed %}false{% else %}true{% endif %}">
+              <button type="submit" class="btn {% if inquiry.is_addressed %}btn-outline{% else %}btn-primary{% endif %}">
+                {% if inquiry.is_addressed %}Reopen inquiry{% else %}Mark addressed{% endif %}
+              </button>
+            </form>
+          </article>
+        {% empty %}
+          <div class="inquiry-empty">
+            <h2>No inquiries in this view</h2>
+            <p>New messages from the public contact form will appear here.</p>
+          </div>
+        {% endfor %}
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}

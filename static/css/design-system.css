@@ -1801,6 +1801,18 @@
 .admin-photo-form-grid .form-group { margin-bottom: 14px; }
 .admin-photo-form-grid .form-control,
 .admin-photo-form-grid .form-select { min-height: 42px; }
+.admin-material-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.admin-material-form-grid .form-group { margin-bottom: 12px; }
+.admin-material-form-grid .form-control { min-height: 42px; }
+.admin-material-form-grid .material-notes-field { grid-column: 1 / -1; }
+.admin-material-list { display: grid; gap: 12px; }
+.admin-material-card { position: relative; padding: 18px; border: 1px solid #E4EBF5; border-radius: 10px; background: #fff; }
+.admin-material-edit-form { padding-right: 75px; }
+.admin-material-actions { display: flex; align-items: center; gap: 12px; }
+.admin-material-actions > span { color: #8A9AB1; font-size: .68rem; }
+.admin-material-delete-form { position: absolute; top: 18px; right: 18px; }
+.admin-material-delete-btn { padding: 7px 10px; border: 1px solid #F0D8D8; border-radius: 6px; color: #A64141; background: #FFF8F8; font-size: .7rem; font-weight: 700; cursor: pointer; }
+.admin-material-delete-btn:hover { background: #FCEAEA; }
 .admin-site-photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
 .admin-site-photo-card { overflow: hidden; border: 1px solid #E4EBF5; border-radius: 9px; background: #fff; }
 .admin-site-photo-card > a { display: block; height: 180px; overflow: hidden; background: #E8EDF4; }
@@ -1926,6 +1938,7 @@
 .client-project-facts small { color: #8494A8; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .client-project-facts strong { overflow: hidden; color: #243C5B; font-size: .73rem; text-overflow: ellipsis; white-space: nowrap; }
 .client-analytics,.client-work-section,.client-updates-section { margin-top: 34px; }
+.client-materials-section { margin-top: 34px; }
 .client-section-title { display: flex; align-items: end; justify-content: space-between; margin-bottom: 16px; }
 .client-section-kicker { display: block; margin-bottom: 4px; color: #1976ED; font-size: .65rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .client-section-title h2 { margin: 0 0 4px; color: #10213F; font-size: 1.45rem; letter-spacing: -.03em; }
@@ -1984,6 +1997,13 @@
 .client-empty-panel { grid-column: 1/-1; padding: 35px; border: 1px dashed #CBD7E7; border-radius: 10px; background: #fff; text-align: center; }
 .client-empty-panel h3 { font-size: .95rem; }
 .client-empty-panel p { margin-top: 5px; font-size: .75rem; }
+.client-material-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.client-material-card { padding: 16px; border: 1px solid #E3EAF4; border-radius: 10px; background: #fff; box-shadow: 0 6px 16px rgba(16,43,85,.045); }
+.client-material-heading { display: flex; align-items: center; gap: 9px; color: #243C5B; font-size: .82rem; }
+.client-material-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; color: #1976ED; background: #EDF4FE; font-size: 1rem; }
+.client-material-quantity { margin: 13px 0 5px; color: #10213F; font-size: 1.05rem; font-weight: 800; }
+.client-material-notes { margin-bottom: 10px; color: #687B98; font-size: .72rem; line-height: 1.55; }
+.client-material-card > small { color: #8A9AB1; font-size: .63rem; }
 .client-photo-empty > span { display: block; margin-bottom: 8px; color: #1976ED; font-size: 1.8rem; }
 .client-inspiration-panel {
   grid-column: 1 / -1;

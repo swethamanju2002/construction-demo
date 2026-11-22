@@ -238,6 +238,34 @@ class ProjectUpdateImage(models.Model):
         return f"{self.site.name} - {self.caption} ({self.uploaded_at.strftime('%Y-%m-%d')})"
 
 
+class SiteMaterial(models.Model):
+    """
+    Material used on a construction site and shared with its assigned client.
+    """
+    site = models.ForeignKey(
+        ConstructionSite,
+        on_delete=models.CASCADE,
+        related_name='materials',
+    )
+    name = models.CharField(max_length=150)
+    quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+    )
+    unit = models.CharField(max_length=30)
+    notes = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+        verbose_name = 'Site Material'
+        verbose_name_plural = 'Site Materials'
+
+    def __str__(self):
+        return f'{self.name} - {self.site.name}'
+
+
 class SiteProgressHistory(models.Model):
     """
     Audit log of site progress milestones.

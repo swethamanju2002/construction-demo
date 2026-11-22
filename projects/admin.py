@@ -5,6 +5,7 @@ from .models import (
     SiteCategoryProgress,
     SiteTask,
     ProjectUpdateImage,
+    SiteMaterial,
     SiteProgressHistory,
 )
 
@@ -29,6 +30,13 @@ class ProjectUpdateImageInline(admin.TabularInline):
     readonly_fields = ('uploaded_at',)
 
 
+class SiteMaterialInline(admin.TabularInline):
+    model = SiteMaterial
+    extra = 0
+    fields = ('name', 'quantity', 'unit', 'notes', 'updated_at')
+    readonly_fields = ('updated_at',)
+
+
 @admin.register(WorkCategory)
 class WorkCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'is_mandatory', 'order')
@@ -41,7 +49,7 @@ class ConstructionSiteAdmin(admin.ModelAdmin):
     list_display = ('name', 'client', 'status', 'display_overall_progress', 'start_date', 'estimated_completion_date')
     list_filter = ('status', 'start_date', 'estimated_completion_date')
     search_fields = ('name', 'client__username', 'client__email', 'site_address')
-    inlines = [SiteCategoryProgressInline, ProjectUpdateImageInline]
+    inlines = [SiteCategoryProgressInline, ProjectUpdateImageInline, SiteMaterialInline]
 
     def display_overall_progress(self, obj):
         return f"{obj.calculate_overall_progress()}%"
@@ -68,6 +76,13 @@ class ProjectUpdateImageAdmin(admin.ModelAdmin):
     list_display = ('site', 'caption', 'category', 'uploaded_at')
     list_filter = ('uploaded_at', 'category')
     search_fields = ('caption', 'site__name')
+
+
+@admin.register(SiteMaterial)
+class SiteMaterialAdmin(admin.ModelAdmin):
+    list_display = ('name', 'site', 'quantity', 'unit', 'updated_at')
+    list_filter = ('site',)
+    search_fields = ('name', 'site__name', 'notes')
 
 
 @admin.register(SiteProgressHistory)

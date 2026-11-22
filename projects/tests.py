@@ -16,6 +16,7 @@ from projects.models import (
     ConstructionSite,
     Notification,
     ProjectUpdateImage,
+    SiteMaterial,
     WorkCategory,
     SiteCategoryProgress,
     SiteTask,
@@ -347,6 +348,121 @@ class PortalPageRenderingTests(TestCase):
         self.assertContains(response, f'/client-portal/site/{self.site.id}/updates/')
         self.assertNotContains(response, 'Basement')
         self.assertNotContains(response, 'class="client-photo-card"')
+
+    def test_admin_can_add_update_and_remove_project_materials(self):
+        self.client.force_login(self.admin)
+        site_url = reverse(
+            'projects:admin_site_detail',
+            kwargs={'site_id': self.site.id},
+        )
+        response = self.client.post(site_url, {
+            'add_material': '1',
+            'name': 'Portland cement',
+            'quantity': '40.00',
+            'unit': 'bags',
+            'notes': 'For the foundation',
+        })
+        self.assertRedirects(response, site_url)
+
+        material = self.site.materials.get(name='Portland cement')
+        self.assertEqual(material.quantity, Decimal('40.00'))
+        self.assertEqual(material.unit, 'bags')
+
+        response = self.client.post(site_url, {
+            'save_material': str(material.id),
+            f'material-{material.id}-name': 'Portland cement',
+            f'material-{material.id}-quantity': '55.00',
+            f'material-{material.id}-unit': 'bags',
+            f'material-{material.id}-notes': 'Additional bags delivered',
+        })
+        self.assertRedirects(response, site_url)
+        material.refresh_from_db()
+        self.assertEqual(material.quantity, Decimal('55.00'))
+        self.assertEqual(material.notes, 'Additional bags delivered')
+
+        response = self.client.post(site_url, {
+            'delete_material': str(material.id),
+        })
+        self.assertRedirects(response, site_url)
+        self.assertFalse(self.site.materials.filter(pk=material.id).exists())
+
+    def test_admin_cannot_change_material_using_a_different_site_url(self):
+        another_client = User.objects.create_user(
+            username='materialotherclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        another_site = ConstructionSite.objects.create(
+            name='Another Material Site',
+            client=another_client,
+            site_address='30 Materials Avenue',
+            start_date=timezone.now().date(),
+            estimated_completion_date=timezone.now().date() + timezone.timedelta(days=90),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+        material = SiteMaterial.objects.create(
+            site=another_site,
+            name='Private project steel',
+            quantity=Decimal('12.00'),
+            unit='tonnes',
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'projects:admin_site_detail',
+                kwargs={'site_id': self.site.id},
+            ),
+            {
+                'save_material': str(material.id),
+                f'material-{material.id}-name': 'Changed steel',
+                f'material-{material.id}-quantity': '99.00',
+                f'material-{material.id}-unit': 'tonnes',
+                f'material-{material.id}-notes': '',
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        material.refresh_from_db()
+        self.assertEqual(material.name, 'Private project steel')
+        self.assertEqual(material.quantity, Decimal('12.00'))
+
+    def test_client_dashboard_shows_only_materials_for_assigned_project(self):
+        SiteMaterial.objects.create(
+            site=self.site,
+            name='Client project timber',
+            quantity=Decimal('25.00'),
+            unit='pieces',
+            notes='Roof framing',
+        )
+        another_client = User.objects.create_user(
+            username='materialclient2',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        another_site = ConstructionSite.objects.create(
+            name='Another Client Material Site',
+            client=another_client,
+            site_address='40 Materials Avenue',
+            start_date=timezone.now().date(),
+            estimated_completion_date=timezone.now().date() + timezone.timedelta(days=90),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+        SiteMaterial.objects.create(
+            site=another_site,
+            name='Other client concrete',
+            quantity=Decimal('10.00'),
+            unit='cubic yards',
+        )
+
+        self.client.force_login(self.client_user)
+        response = self.client.get('/client-portal/dashboard/', follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Client project timber')
+        self.assertContains(response, '25.00 pieces')
+        self.assertContains(response, 'Roof framing')
+        self.assertNotContains(response, 'Other client concrete')
 
     def test_work_and_photo_updates_render_on_separate_pages(self):
         with TemporaryDirectory() as media_root:

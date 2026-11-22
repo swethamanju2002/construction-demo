@@ -22,7 +22,12 @@ from accounts.models import User
 from accounts.forms import ClientCreationForm
 from accounts.permissions import site_admin_required, client_required
 from core.models import ContactInquiry
-from .forms import ClientFeedbackForm, ConstructionSiteForm, ProjectUpdateImageForm
+from .forms import (
+    ClientFeedbackForm,
+    ConstructionSiteForm,
+    ProjectUpdateImageForm,
+    SiteMaterialForm,
+)
 from .models import (
     ClientFeedback,
     ConstructionSite,
@@ -211,11 +216,51 @@ def admin_site_detail(request, site_id):
     else:
         photo_form = ProjectUpdateImageForm()
 
+    material_form = SiteMaterialForm()
+    invalid_material_forms = {}
+    if request.method == 'POST' and 'add_material' in request.POST:
+        material_form = SiteMaterialForm(request.POST)
+        if material_form.is_valid():
+            material = material_form.save(commit=False)
+            material.site = site
+            material.save()
+            messages.success(request, f'{material.name} was added to this project.')
+            return redirect('projects:admin_site_detail', site_id=site.id)
+    elif request.method == 'POST' and request.POST.get('save_material'):
+        material_id = request.POST.get('save_material')
+        if not material_id.isdecimal():
+            raise Http404
+        material = get_object_or_404(site.materials, pk=int(material_id))
+        edit_form = SiteMaterialForm(
+            request.POST,
+            instance=material,
+            prefix=f'material-{material.id}',
+        )
+        if edit_form.is_valid():
+            updated_material = edit_form.save()
+            messages.success(request, f'{updated_material.name} was updated.')
+            return redirect('projects:admin_site_detail', site_id=site.id)
+        invalid_material_forms[material.id] = edit_form
+    elif request.method == 'POST' and request.POST.get('delete_material'):
+        material_id = request.POST.get('delete_material')
+        if not material_id.isdecimal():
+            raise Http404
+        material = get_object_or_404(site.materials, pk=int(material_id))
+        material.delete()
+        messages.success(request, 'The material was removed from this project.')
+        return redirect('projects:admin_site_detail', site_id=site.id)
+
     # Filter category dropdown for photo form to categories belonging to this site
     photo_form.fields['category'].queryset = WorkCategory.objects.all()
 
     category_progresses = site.category_progresses.all()
     overall_progress = site.calculate_overall_progress()
+    materials = list(site.materials.all())
+    for material in materials:
+        material.edit_form = invalid_material_forms.get(material.id) or SiteMaterialForm(
+            instance=material,
+            prefix=f'material-{material.id}',
+        )
 
     context = {
         'site': site,
@@ -223,6 +268,8 @@ def admin_site_detail(request, site_id):
         'overall_progress': overall_progress,
         'photo_form': photo_form,
         'photos': site.update_images.all()[:30],
+        'material_form': material_form,
+        'materials': materials,
     }
     return render(request, 'admin_portal/site_detail.html', context)
 
@@ -663,6 +710,7 @@ def client_site_detail(request, site_id):
         prefetch_related=(
             'category_progresses__category',
             'category_progresses__tasks',
+            'materials',
         ),
     )
 
@@ -684,6 +732,7 @@ def client_site_detail(request, site_id):
         'chart_category_labels_json': json.dumps(chart_category_labels),
         'chart_category_data_json': json.dumps(chart_category_data),
         'photo_count': site.update_images.count(),
+        'materials': site.materials.all(),
     }
     return render(request, 'client_portal/dashboard.html', context)
 

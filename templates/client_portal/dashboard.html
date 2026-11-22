@@ -58,6 +58,22 @@
       </div>
     </section>
 
+    <section class="client-materials-section" aria-labelledby="clientMaterialsTitle">
+      <div class="client-section-title"><div><span class="client-section-kicker">Project resources</span><h2 id="clientMaterialsTitle">Materials used</h2><p>Materials recorded by your project team.</p></div></div>
+      <div class="client-material-grid">
+        {% for material in materials %}
+        <article class="client-material-card">
+          <div class="client-material-heading"><span class="client-material-icon" aria-hidden="true">▤</span><strong>{{ material.name }}</strong></div>
+          <p class="client-material-quantity">{{ material.quantity }} {{ material.unit }}</p>
+          {% if material.notes %}<p class="client-material-notes">{{ material.notes }}</p>{% endif %}
+          <small>Updated {{ material.updated_at|date:"M d, Y" }}</small>
+        </article>
+        {% empty %}
+        <div class="client-empty-panel"><h3>No materials listed yet</h3><p>Your project team will add materials here as they are recorded.</p></div>
+        {% endfor %}
+      </div>
+    </section>
+
     <section class="client-shortcuts" aria-labelledby="clientUpdatesTitle">
       <div class="client-section-title"><div><span class="client-section-kicker">Stay up to date</span><h2 id="clientUpdatesTitle">Project updates</h2><p>Open a dedicated view for work checklists or the latest site photos.</p></div></div>
       <div class="client-shortcut-grid">

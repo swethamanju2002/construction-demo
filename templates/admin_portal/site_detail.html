@@ -85,6 +85,51 @@
         </div>
       </section>
 
+      <section class="admin-detail-section">
+        <div class="admin-detail-section-heading">
+          <div><span class="admin-eyebrow navy">Project materials</span><h2>Materials used</h2><p>Add or update materials for this project. The assigned client can view this list in their portal.</p></div>
+        </div>
+        <form method="post" class="admin-photo-upload admin-material-add-form">
+          {% csrf_token %}
+          {% if material_form.non_field_errors %}<div class="site-field-error">{{ material_form.non_field_errors }}</div>{% endif %}
+          <div class="admin-material-form-grid">
+            <div class="form-group"><label class="form-label" for="{{ material_form.name.id_for_label }}">Material *</label>{{ material_form.name }}{% if material_form.name.errors %}<div class="site-field-error">{{ material_form.name.errors.0 }}</div>{% endif %}</div>
+            <div class="form-group"><label class="form-label" for="{{ material_form.quantity.id_for_label }}">Quantity *</label>{{ material_form.quantity }}{% if material_form.quantity.errors %}<div class="site-field-error">{{ material_form.quantity.errors.0 }}</div>{% endif %}</div>
+            <div class="form-group"><label class="form-label" for="{{ material_form.unit.id_for_label }}">Unit *</label>{{ material_form.unit }}{% if material_form.unit.errors %}<div class="site-field-error">{{ material_form.unit.errors.0 }}</div>{% endif %}</div>
+            <div class="form-group material-notes-field"><label class="form-label" for="{{ material_form.notes.id_for_label }}">Notes</label>{{ material_form.notes }}{% if material_form.notes.errors %}<div class="site-field-error">{{ material_form.notes.errors.0 }}</div>{% endif %}</div>
+          </div>
+          <button type="submit" name="add_material" value="1" class="btn admin-card-btn">Add material</button>
+        </form>
+
+        <div class="admin-material-list">
+          {% for material in materials %}
+          <article class="admin-material-card">
+            <form method="post" class="admin-material-edit-form">
+              {% csrf_token %}
+              <input type="hidden" name="save_material" value="{{ material.id }}">
+              <div class="admin-material-form-grid">
+                <div class="form-group"><label class="form-label" for="{{ material.edit_form.name.id_for_label }}">Material *</label>{{ material.edit_form.name }}{% if material.edit_form.name.errors %}<div class="site-field-error">{{ material.edit_form.name.errors.0 }}</div>{% endif %}</div>
+                <div class="form-group"><label class="form-label" for="{{ material.edit_form.quantity.id_for_label }}">Quantity *</label>{{ material.edit_form.quantity }}{% if material.edit_form.quantity.errors %}<div class="site-field-error">{{ material.edit_form.quantity.errors.0 }}</div>{% endif %}</div>
+                <div class="form-group"><label class="form-label" for="{{ material.edit_form.unit.id_for_label }}">Unit *</label>{{ material.edit_form.unit }}{% if material.edit_form.unit.errors %}<div class="site-field-error">{{ material.edit_form.unit.errors.0 }}</div>{% endif %}</div>
+                <div class="form-group material-notes-field"><label class="form-label" for="{{ material.edit_form.notes.id_for_label }}">Notes</label>{{ material.edit_form.notes }}{% if material.edit_form.notes.errors %}<div class="site-field-error">{{ material.edit_form.notes.errors.0 }}</div>{% endif %}</div>
+              </div>
+              {% if material.edit_form.non_field_errors %}<div class="site-field-error">{{ material.edit_form.non_field_errors }}</div>{% endif %}
+              <div class="admin-material-actions">
+                <button type="submit" class="btn admin-card-btn">Save material</button>
+                <span>Updated {{ material.updated_at|date:"M d, Y" }}</span>
+              </div>
+            </form>
+            <form method="post" class="admin-material-delete-form">
+              {% csrf_token %}
+              <button type="submit" name="delete_material" value="{{ material.id }}" class="admin-material-delete-btn">Remove</button>
+            </form>
+          </article>
+          {% empty %}
+          <div class="admin-photo-empty"><span aria-hidden="true">▤</span><strong>No materials recorded</strong><p>Add the materials used for this project above.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+
       <section class="admin-detail-section admin-photos-panel">
         <div class="admin-detail-section-heading">
           <div><span class="admin-eyebrow navy">Client-visible updates</span><h2>Site photos</h2><p>Upload project photos to the client’s read-only progress feed.</p></div>

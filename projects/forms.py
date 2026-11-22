@@ -4,6 +4,7 @@ from .models import (
     ClientFeedback,
     ConstructionSite,
     ProjectUpdateImage,
+    SiteMaterial,
     SiteCategoryProgress,
     SiteTask,
 )
@@ -116,6 +117,32 @@ class ProjectUpdateImageForm(forms.ModelForm):
             }),
             'category': forms.Select(attrs={
                 'class': 'form-select'
+            }),
+        }
+
+
+class SiteMaterialForm(forms.ModelForm):
+    class Meta:
+        model = SiteMaterial
+        fields = ['name', 'quantity', 'unit', 'notes']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. Portland cement',
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0.01',
+                'step': '0.01',
+            }),
+            'unit': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. bags',
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional details',
             }),
         }
 

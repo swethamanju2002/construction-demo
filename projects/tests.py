@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.utils import timezone
 from accounts.models import User
 from projects.models import ConstructionSite, WorkCategory, SiteCategoryProgress, SiteTask
+from projects.forms import ConstructionSiteForm
 
 
 class ProgressCalculationTests(TestCase):
@@ -205,4 +206,30 @@ class ProgressCalculationTests(TestCase):
         showcase.is_enabled = False
         showcase.save()
         self.assertEqual(self.site.calculate_overall_progress(), Decimal('100.00'))
+
+    def test_registration_form_saves_optional_categories(self):
+        form = ConstructionSiteForm(data={
+            'name': 'Category Selection Test',
+            'client': self.client_user.id,
+            'site_address': '25 Test Avenue',
+            'start_date': timezone.now().date(),
+            'estimated_completion_date': timezone.now().date() + timezone.timedelta(days=120),
+            'status': ConstructionSite.STATUS_ONGOING,
+            'project_manager': 'Test Project Lead',
+            'showcase_work': 'on',
+            'wall_ceiling_work': '',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+
+        site = form.save()
+        self.assertTrue(
+            site.category_progresses.get(category__slug='showcase-work').is_enabled
+        )
+        self.assertFalse(
+            site.category_progresses.get(category__slug='wall-ceiling-work').is_enabled
+        )
+        for slug in ('building-work', 'electrical-work', 'plumbing-work'):
+            self.assertTrue(
+                site.category_progresses.get(category__slug=slug).is_enabled
+            )
 

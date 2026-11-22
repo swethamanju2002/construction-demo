@@ -4,7 +4,7 @@
 {% block title %}{{ title }} | Structura CRM{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 620px; padding-top: 2.5rem; padding-bottom: 4rem;">
+<div class="container crm-client-form-page" style="max-width: 620px; padding-top: 2.5rem; padding-bottom: 4rem;">
 
   <div style="margin-bottom: 1.5rem;">
     <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'projects:admin_client_list' %}{% endif %}" class="btn btn-outline btn-sm">

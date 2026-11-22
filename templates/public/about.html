@@ -1,102 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}About Us | Structura Construction Management{% endblock %}
+{% block title %}About Structura | Construction with Clarity{% endblock %}
 
 {% block content %}
-<!-- Header Banner -->
-<section style="background: var(--navy); color: #fff; padding: 4rem 0 3.5rem;">
-  <div class="container">
-    <span class="badge badge-ongoing" style="margin-bottom: 8px;">Corporate Profile</span>
-    <h1 style="color: #fff; font-size: 2.5rem; margin-bottom: 0.75rem;">Engineered for Structural Permanence</h1>
-    <p style="color: rgba(255, 255, 255, 0.85); font-size: 1.15rem; max-width: 650px;">
-      Founded on the principle that transparency builds lasting trust, Structura combines civil engineering excellence with digital telemetry.
-    </p>
+<section class="public-inner-hero public-about-hero">
+  <div class="container public-inner-hero-content">
+    <span class="public-kicker"><span></span> Our point of view</span>
+    <h1>Good construction is built on trust.</h1>
+    <p>We pair thoughtful project delivery with clear communication, so clients can feel informed at every stage of their build.</p>
+    <div class="public-breadcrumb"><a href="{% url 'core:home' %}">Home</a><span>/</span><strong>About Structura</strong></div>
   </div>
 </section>
 
-<!-- Mission & Values -->
-<section style="padding: 4.5rem 0; background: var(--surface);">
-  <div class="container">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; align-items: center;">
-      <div>
-        <span class="badge badge-ongoing" style="margin-bottom: 8px;">Our Mission</span>
-        <h2 style="margin-bottom: 1rem;">Eliminating the Black Box in Modern Construction</h2>
-        <p style="margin-bottom: 1rem;">
-          Traditional construction projects suffer from communication gaps, unexpected delays, and opaque progress tracking. At Structura, every foundation pour, conduit route, and water line fitting is logged digitally and verified by lead civil engineers.
-        </p>
-        <p>
-          Homeowners receive uninterrupted access to their personalized client dashboard, featuring real-time mathematical progress metrics and high-definition on-site verification photography.
-        </p>
-      </div>
-
-      <div class="card" style="background: var(--surface-subtle); border-left: 5px solid var(--amber);">
-        <h3 style="margin-bottom: 1rem;">Core Engineering Pillars</h3>
-        <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem;">
-          <li style="display: flex; gap: 12px;">
-            <span style="color: var(--amber); font-weight: 800; font-size: 1.1rem;">01.</span>
-            <div>
-              <strong>Seismic-Grade Structural Foundations:</strong>
-              <div style="font-size: 0.9rem; color: var(--text-secondary);">High-grade concrete casting, lintels, and ultrasonic rebar inspections.</div>
-            </div>
-          </li>
-          <li style="display: flex; gap: 12px;">
-            <span style="color: var(--primary); font-weight: 800; font-size: 1.1rem;">02.</span>
-            <div>
-              <strong>Concealed Engineering Excellence:</strong>
-              <div style="font-size: 0.9rem; color: var(--text-secondary);">Fire-rated electrical pipe concealing and pressure-tested plumbing lines.</div>
-            </div>
-          </li>
-          <li style="display: flex; gap: 12px;">
-            <span style="color: var(--success); font-weight: 800; font-size: 1.1rem;">03.</span>
-            <div>
-              <strong>Zero-Trust Client Access Control:</strong>
-              <div style="font-size: 0.9rem; color: var(--text-secondary);">Strict data boundaries ensuring each homeowner only sees their authorized site data.</div>
-            </div>
-          </li>
-        </ul>
-      </div>
+<section class="public-about-story">
+  <div class="container public-about-story-grid">
+    <div class="public-about-image" role="img" aria-label="Architectural construction site">
+      <div class="public-image-stamp"><strong>01</strong><span>Our<br>approach</span></div>
+    </div>
+    <div class="public-about-copy">
+      <span class="public-kicker-dark">Why Structura</span>
+      <h2>Make the complex feel manageable.</h2>
+      <p>Building a home or commercial space involves hundreds of decisions and milestones. Our approach makes those milestones visible, with project information grounded in the actual work being completed.</p>
+      <p>Site teams maintain task and photo updates. Clients can follow progress through a dedicated, read-only portal. Administrators retain the tools to manage schedules, categories, and project records.</p>
+      <a href="{% url 'core:contact' %}" class="public-inline-link">Meet your project team <span aria-hidden="true">→</span></a>
     </div>
   </div>
 </section>
 
-<!-- Engineering Leadership Team -->
-<section style="padding: 4.5rem 0; background: var(--bg-main);">
+<section class="public-about-principles">
   <div class="container">
-    <div style="text-align: center; max-width: 600px; margin: 0 auto 3rem;">
-      <span class="badge badge-ongoing" style="margin-bottom: 8px;">Technical Leadership</span>
-      <h2>Our Engineering Leadership</h2>
-      <p>Experienced civil engineers, project managers, and digital architects driving every build.</p>
+    <div class="public-section-heading">
+      <div><span class="public-kicker-dark">What guides the work</span><h2>Principles that show up on site.</h2></div>
+      <p>Clear expectations and careful coordination are part of the build—not an afterthought.</p>
     </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
-      <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; background: #E2E8F0; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--navy);">
-          👷‍♂️
-        </div>
-        <h4 style="margin-bottom: 4px;">Eng. Robert Vance, PE</h4>
-        <div style="font-size: 0.85rem; color: var(--primary); font-weight: 700; margin-bottom: 8px;">Chief Structural Engineer</div>
-        <p style="font-size: 0.85rem;">22+ years supervising multi-story reinforced concrete, subterranean basements, and earthquake-resistant foundations.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; background: #E2E8F0; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--navy);">
-          ⚡
-        </div>
-        <h4 style="margin-bottom: 4px;">David Sterling, M.Sc</h4>
-        <div style="font-size: 0.85rem; color: var(--amber); font-weight: 700; margin-bottom: 8px;">Director of Electrical Systems</div>
-        <p style="font-size: 0.85rem;">Specialist in concealed conduit networks, high-voltage substations, and energy-efficient architectural lighting integration.</p>
-      </div>
-
-      <div class="card" style="text-align: center; padding: 2rem 1.5rem;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; background: #E2E8F0; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--navy);">
-          🏗
-        </div>
-        <h4 style="margin-bottom: 4px;">Elena Rostova, AIA</h4>
-        <div style="font-size: 0.85rem; color: var(--accent); font-weight: 700; margin-bottom: 8px;">Principal Architect & Interiors</div>
-        <p style="font-size: 0.85rem;">Pioneering modern gypsum false ceilings, custom millwork showcase designs, and ergonomic residential floor plans.</p>
-      </div>
+    <div class="public-principle-grid">
+      <article><span>01</span><h3>Craftsmanship</h3><p>Respect for materials, sound construction practices, and details that hold up over time.</p></article>
+      <article><span>02</span><h3>Accountability</h3><p>Work is tracked through defined categories and task records, creating a useful project history.</p></article>
+      <article><span>03</span><h3>Transparency</h3><p>Clients have a clear view of authorized project progress and the latest verified updates.</p></article>
     </div>
+  </div>
+</section>
+
+<section class="public-about-steps">
+  <div class="container">
+    <div class="public-centered-heading"><span class="public-kicker-dark">A connected process</span><h2>Every phase, thoughtfully managed.</h2></div>
+    <div class="public-about-timeline">
+      <div><span class="public-timeline-number">01</span><div><h3>Define the project</h3><p>We align on scope, project contacts, timelines, and the work streams that apply.</p></div></div>
+      <div><span class="public-timeline-number">02</span><div><h3>Coordinate the work</h3><p>Our team manages site progress through practical checklists and ongoing coordination.</p></div></div>
+      <div><span class="public-timeline-number">03</span><div><h3>Keep progress visible</h3><p>Task completion and construction photos help clients follow meaningful milestones.</p></div></div>
+      <div><span class="public-timeline-number">04</span><div><h3>Prepare for handover</h3><p>We bring the project record together as the team completes the final stages.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="public-final-cta">
+  <div class="container public-final-cta-inner">
+    <div><span class="public-kicker-dark">Work with Structura</span><h2>Let’s talk about what you’re building.</h2><p>Share your project goals with our team.</p></div>
+    <a href="{% url 'core:contact' %}" class="btn public-btn-navy">Contact our team <span aria-hidden="true">→</span></a>
   </div>
 </section>
 {% endblock %}

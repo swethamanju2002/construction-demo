@@ -4,6 +4,17 @@ from .models import ConstructionSite, ProjectUpdateImage, SiteCategoryProgress, 
 
 
 class ConstructionSiteForm(forms.ModelForm):
+    showcase_work = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='Showcase Work',
+    )
+    wall_ceiling_work = forms.BooleanField(
+        required=False,
+        initial=False,
+        label='Wall Ceiling Work',
+    )
+
     class Meta:
         model = ConstructionSite
         fields = [
@@ -52,6 +63,36 @@ class ConstructionSiteForm(forms.ModelForm):
         if not self.fields['client'].queryset.exists():
             # Fallback to any user if no client registered yet
             self.fields['client'].queryset = User.objects.all()
+        if self.instance and self.instance.pk:
+            category_states = dict(
+                self.instance.category_progresses.values_list(
+                    'category__slug',
+                    'is_enabled',
+                )
+            )
+            self.fields['showcase_work'].initial = category_states.get('showcase-work', False)
+            self.fields['wall_ceiling_work'].initial = category_states.get('wall-ceiling-work', False)
+
+    def save(self, commit=True):
+        site = super().save(commit=commit)
+        if not commit:
+            return site
+
+        optional_states = {
+            'showcase-work': self.cleaned_data['showcase_work'],
+            'wall-ceiling-work': self.cleaned_data['wall_ceiling_work'],
+        }
+        for slug, is_enabled in optional_states.items():
+            category_progress = site.category_progresses.filter(category__slug=slug).first()
+            if category_progress:
+                category_progress.is_enabled = is_enabled
+                category_progress.save(update_fields=['is_enabled', 'updated_at'])
+
+        # Mandatory categories are never left disabled.
+        site.category_progresses.filter(
+            category__is_mandatory=True
+        ).exclude(is_enabled=True).update(is_enabled=True)
+        return site
 
 
 class ProjectUpdateImageForm(forms.ModelForm):

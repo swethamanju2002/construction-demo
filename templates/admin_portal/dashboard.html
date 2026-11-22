@@ -3,147 +3,175 @@
 
 {% block title %}Admin Dashboard | Structura CRM{% endblock %}
 
+{% block navbar %}{% endblock %}
+
 {% block content %}
-<div class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
-  
-  <!-- Page Header & Action Bar -->
-  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-        <span class="badge badge-ongoing">Site Administrator</span>
-        <span style="color: var(--text-muted); font-size: 0.85rem;">Project Operations Command</span>
-      </div>
-      <h1>Construction Portfolio Overview</h1>
-      <p>Manage active construction projects, configure work categories, and record real-time progress.</p>
-    </div>
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <a href="{% url 'projects:admin_dashboard' %}" class="admin-brand">
+      <span class="admin-brand-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 11h2v3H9zm4 0h2v3h-2zm-4 6h6v4H9z"/></svg>
+      </span>
+      <span class="admin-brand-copy"><strong>STRUCTURA</strong><small>CRM</small></span>
+    </a>
 
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-      <a href="{% url 'projects:admin_client_list' %}" class="btn btn-outline">
-        👥 Manage Clients ({{ total_clients }})
+    <nav class="admin-nav" aria-label="Administrator navigation">
+      <a href="{% url 'projects:admin_dashboard' %}" class="admin-nav-link active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-12h8V3h-8z"/></svg>
+        <span>Dashboard</span>
       </a>
-      <a href="{% url 'projects:admin_site_create' %}" class="btn btn-amber">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Create New Construction Site
+      <a href="{% url 'projects:admin_dashboard' %}" class="admin-nav-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 12h6M9 16h6"/></svg>
+        <span>Sites</span>
+      </a>
+      <a href="{% url 'projects:admin_client_list' %}" class="admin-nav-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users</span>
+      </a>
+      <a href="{% url 'projects:admin_site_create' %}" class="admin-nav-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>New Site</span>
+      </a>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+      <a href="{% url 'accounts:logout' %}" class="admin-nav-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
+        <span>Logout</span>
       </a>
     </div>
-  </div>
+  </aside>
 
-  <!-- Metric Statistics Cards -->
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Total Sites</div>
-      <div class="metric-value">{{ total_sites }}</div>
-      <div class="metric-hint">Active sites under management</div>
-    </div>
+  <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
 
-    <div class="metric-card accent">
-      <div class="metric-label">Ongoing Builds</div>
-      <div class="metric-value">{{ ongoing_count }}</div>
-      <div class="metric-hint">{{ planning_count }} in planning phase</div>
-    </div>
-
-    <div class="metric-card success">
-      <div class="metric-label">Completed Builds</div>
-      <div class="metric-value">{{ completed_count }}</div>
-      <div class="metric-hint">Delivered to homeowners</div>
-    </div>
-
-    <div class="metric-card amber">
-      <div class="metric-label">Avg. Completion</div>
-      <div class="metric-value">{{ avg_progress }}%</div>
-      <div class="metric-hint">Across all active sites</div>
-    </div>
-  </div>
-
-  <!-- Filter & Search Bar -->
-  <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-    <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-      <div style="flex: 1; min-width: 260px;">
-        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by site name, client name, or address...">
+  <div class="admin-workspace">
+    <header class="admin-topbar">
+      <button type="button" class="admin-menu-toggle" id="adminMenuToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="admin-topbar-actions">
+        <span class="admin-date" id="adminCurrentDate"></span>
+        <div class="admin-profile">
+          <span class="admin-avatar">{{ user.first_name|first|default:user.username|first|upper }}</span>
+          <span><strong>{{ user.get_full_name|default:user.username }}</strong><small>Administrator</small></span>
+        </div>
       </div>
-      <div style="min-width: 180px;">
-        <select name="status" class="form-select">
-          <option value="">All Project Statuses</option>
-          {% for code, label in status_choices %}
-            <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+    </header>
+
+    <main class="admin-main">
+      <section class="admin-hero">
+        <div class="admin-hero-content">
+          <span class="admin-eyebrow">Project Operations</span>
+          <h1>Construction Dashboard</h1>
+          <p>Monitor project health, progress, and site activity from one clear view.</p>
+        </div>
+        <a href="{% url 'projects:admin_site_create' %}" class="btn admin-create-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          New Site
+        </a>
+      </section>
+
+      <section class="admin-metrics" aria-label="Construction portfolio metrics">
+        <article class="admin-metric-card reveal">
+          <span class="admin-metric-icon blue">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 12h6M9 16h6"/></svg>
+          </span>
+          <div><strong>{{ total_sites }}</strong><span>Total Sites</span><small>Portfolio projects</small></div>
+        </article>
+        <article class="admin-metric-card reveal">
+          <span class="admin-metric-icon green">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          </span>
+          <div><strong>{{ on_track_count }}</strong><span>On Track</span><small>Within schedule</small></div>
+        </article>
+        <article class="admin-metric-card reveal">
+          <span class="admin-metric-icon blue">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+          <div><strong>{{ in_progress_count }}</strong><span>In Progress</span><small>Ongoing construction</small></div>
+        </article>
+        <article class="admin-metric-card reveal">
+          <span class="admin-metric-icon red">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          </span>
+          <div><strong>{{ delayed_count }}</strong><span>Delayed</span><small>Hold or past deadline</small></div>
+        </article>
+      </section>
+
+      <section class="admin-sites-section">
+        <div class="admin-section-heading">
+          <div><span class="admin-eyebrow navy">Active Projects</span><h2>Construction Sites</h2></div>
+          <form method="get" class="admin-search" role="search">
+            <label class="sr-only" for="adminSiteSearch">Search sites</label>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="adminSiteSearch" type="text" name="q" value="{{ query }}" placeholder="Search sites or clients">
+            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+          </form>
+        </div>
+
+        <form method="get" class="admin-filters">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter" name="status">
+            <option value="">All statuses</option>
+            {% for code, label in status_choices %}
+              <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% if query or status_filter %}
+            <a href="{% url 'projects:admin_dashboard' %}" class="admin-filter-clear">Clear filters</a>
+          {% endif %}
+        </form>
+
+        <div class="admin-project-grid">
+          {% for site in sites %}
+          {% with completed=site.calculate_overall_progress remaining=site.remaining_percentage %}
+          <article class="admin-project-card reveal">
+            <div class="admin-project-accent accent-{{ forloop.counter|divisibleby:3|yesno:'green,blue' }}"></div>
+            <div class="admin-project-header">
+              <div class="admin-project-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 12h6M9 16h6"/></svg>
+              </div>
+              <span class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</span>
+            </div>
+            <h3><a href="{% url 'projects:admin_site_detail' site.id %}">{{ site.name }}</a></h3>
+            <div class="admin-project-location">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2"/></svg>
+              {{ site.site_address|truncatechars:52 }}
+            </div>
+            <div class="admin-project-progress">
+              <div class="admin-donut-wrap">
+                <canvas class="siteProgressChart" data-completed="{{ completed }}" data-remaining="{{ remaining }}"></canvas>
+                <div class="admin-donut-label"><strong>{{ completed|floatformat:0 }}%</strong><span>Complete</span></div>
+              </div>
+              <div class="admin-project-meta">
+                <div><span>Client</span><strong>{{ site.client.get_full_name|default:site.client.username }}</strong></div>
+                <div><span>Start date</span><strong>{{ site.start_date|date:"M d, Y" }}</strong></div>
+                <div><span>Est. completion</span><strong>{{ site.estimated_completion_date|date:"M d, Y" }}</strong></div>
+              </div>
+            </div>
+            <div class="admin-project-actions">
+              <a href="{% url 'projects:admin_site_detail' site.id %}" class="btn admin-card-btn">Manage Site</a>
+              <a href="{% url 'projects:admin_site_edit' site.id %}" class="admin-edit-link">Edit details</a>
+            </div>
+          </article>
+          {% endwith %}
+          {% empty %}
+          <div class="admin-empty-state">
+            <div class="admin-empty-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 12h6M9 16h6"/></svg>
+            </div>
+            <h3>No construction sites found</h3>
+            <p>Create a site or clear your filters to see the portfolio.</p>
+            <a href="{% url 'projects:admin_site_create' %}" class="btn admin-create-btn">Create New Site</a>
+          </div>
           {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-      {% if query or status_filter %}
-        <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline btn-sm">Clear</a>
-      {% endif %}
-    </form>
-  </div>
-
-  <!-- Sites Table -->
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Construction Project</th>
-          <th>Assigned Client</th>
-          <th>Status</th>
-          <th>Timeline</th>
-          <th>Overall Progress</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for site in sites %}
-        <tr>
-          <td>
-            <div style="font-weight: 700; color: var(--navy); font-size: 1rem;">
-              <a href="{% url 'projects:admin_site_detail' site.id %}">{{ site.name }}</a>
-            </div>
-            <div style="font-size: 0.82rem; color: var(--text-muted);">
-              📍 {{ site.site_address|truncatechars:45 }}
-            </div>
-          </td>
-          <td>
-            <div style="font-weight: 600;">{{ site.client.get_full_name|default:site.client.username }}</div>
-            <div style="font-size: 0.82rem; color: var(--text-muted);">{{ site.client.email|default:"No email recorded" }}</div>
-          </td>
-          <td>
-            <span class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</span>
-          </td>
-          <td style="font-size: 0.85rem;">
-            <div><strong>Start:</strong> {{ site.start_date|date:"M d, Y" }}</div>
-            <div style="color: var(--text-muted);"><strong>Est:</strong> {{ site.estimated_completion_date|date:"M d, Y" }}</div>
-          </td>
-          <td style="min-width: 180px;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
-              <span>Progress</span>
-              <span style="color: var(--primary);">{{ site.calculate_overall_progress }}%</span>
-            </div>
-            <div class="progress-container">
-              <div class="progress-bar" style="width: {{ site.calculate_overall_progress }}%;"></div>
-            </div>
-          </td>
-          <td style="text-align: right; white-space: nowrap;">
-            <a href="{% url 'projects:admin_site_detail' site.id %}" class="btn btn-primary btn-sm" title="Manage subtasks and progress photos">
-              Manage Tasks ⚙
-            </a>
-            <a href="{% url 'projects:admin_site_edit' site.id %}" class="btn btn-outline btn-sm" title="Edit Site Details">
-              Edit ✏
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
-            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏗</div>
-            <div style="font-size: 1.15rem; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem;">No construction sites found</div>
-            <p style="margin-bottom: 1.5rem;">Create your first construction project to begin tracking subtasks and client progress.</p>
-            <a href="{% url 'projects:admin_site_create' %}" class="btn btn-amber">Create New Site</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </div>
+      </section>
+    </main>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin_dashboard.js' %}"></script>
 {% endblock %}

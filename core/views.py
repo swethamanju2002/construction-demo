@@ -15,6 +15,7 @@ def home(request):
     # Real data metrics
     total_sites = ConstructionSite.objects.count()
     completed_count = ConstructionSite.objects.filter(status=ConstructionSite.STATUS_COMPLETED).count()
+    category_count = WorkCategory.objects.count()
 
     context = {
         'completed_sites': completed_sites,
@@ -22,6 +23,7 @@ def home(request):
         'recent_photos': recent_photos,
         'total_sites': total_sites,
         'completed_count': completed_count,
+        'category_count': category_count,
     }
     return render(request, 'public/home.html', context)
 

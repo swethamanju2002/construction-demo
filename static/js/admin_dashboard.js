@@ -1,5 +1,68 @@
 // Admin Dashboard Dynamic Interactions & Task Checklist Engine
 document.addEventListener('DOMContentLoaded', () => {
+  const sidebar = document.getElementById('adminSidebar');
+  const menuToggle = document.getElementById('adminMenuToggle');
+  const sidebarBackdrop = document.getElementById('adminSidebarBackdrop');
+
+  const closeSidebar = () => {
+    if (sidebar) sidebar.classList.remove('open');
+    if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+  };
+
+  if (menuToggle && sidebar) {
+    menuToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('open');
+      if (sidebarBackdrop) sidebarBackdrop.classList.toggle('active', isOpen);
+      menuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+  }
+  if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
+
+  const dateTarget = document.getElementById('adminCurrentDate');
+  if (dateTarget) {
+    dateTarget.textContent = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(new Date());
+  }
+
+  document.querySelectorAll('.reveal').forEach((element, index) => {
+    element.style.animationDelay = `${Math.min(index * 70, 350)}ms`;
+  });
+
+  if (window.Chart) {
+    document.querySelectorAll('.siteProgressChart').forEach((canvas) => {
+      const completed = Number(canvas.dataset.completed || 0);
+      const remaining = Math.max(0, 100 - completed);
+      new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [completed, remaining],
+            backgroundColor: ['#1976ED', '#E8EEF7'],
+            borderWidth: 0,
+            borderRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          rotation: -90,
+          circumference: 360,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
+          animation: { animateRotate: true, duration: 800 }
+        }
+      });
+    });
+  }
+
   const csrftoken = getCookie('csrftoken');
 
   // Subtask Checklist Toggle

@@ -1,62 +1,55 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Project Gallery | Structura Construction Management{% endblock %}
+{% block title %}Project Gallery | Structura{% endblock %}
 
 {% block content %}
-<section style="background: var(--navy); color: #fff; padding: 4rem 0 3.5rem;">
-  <div class="container">
-    <span class="badge badge-ongoing" style="margin-bottom: 8px;">Portfolio Gallery</span>
-    <h1 style="color: #fff; font-size: 2.5rem; margin-bottom: 0.75rem;">Verified Construction Builds</h1>
-    <p style="color: rgba(255, 255, 255, 0.85); font-size: 1.15rem; max-width: 650px;">
-      Explore structural milestones, concealed utility routing, and completed architectural finishes from active and delivered projects.
-    </p>
+<section class="public-inner-hero public-gallery-hero">
+  <div class="container public-inner-hero-content">
+    <span class="public-kicker"><span></span> Work in progress and work completed</span>
+    <h1>Real projects. Real progress.</h1>
+    <p>A closer look at site updates shared by the teams doing the work.</p>
+    <div class="public-breadcrumb"><a href="{% url 'core:home' %}">Home</a><span>/</span><strong>Project Gallery</strong></div>
   </div>
 </section>
 
-<div class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+<section class="public-gallery-section">
+  <div class="container">
+    <div class="public-gallery-intro">
+      <div><span class="public-kicker-dark">Project journal</span><h2>On-site updates</h2></div>
+      <p>Browse verified construction photos by work category. Select an image to view it in detail.</p>
+    </div>
 
-  <!-- Category Filter Pills -->
-  <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 2.5rem; justify-content: center;">
-    <a href="{% url 'core:gallery' %}" class="btn {% if not active_category %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
-      All Disciplines
-    </a>
-    {% for cat in categories %}
-    <a href="{% url 'core:gallery' %}?category={{ cat.slug }}" class="btn {% if active_category == cat.slug %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
-      {{ cat.name }}
-    </a>
-    {% endfor %}
-  </div>
+    <nav class="public-gallery-filters" aria-label="Filter photos by work category">
+      <a href="{% url 'core:gallery' %}" class="public-gallery-filter {% if not active_category %}active{% endif %}">All work</a>
+      {% for cat in categories %}
+      <a href="{% url 'core:gallery' %}?category={{ cat.slug }}" class="public-gallery-filter {% if active_category == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </nav>
 
-  <!-- Gallery Photos Grid -->
-  <div class="gallery-grid">
-    {% for photo in photos %}
-    <div class="photo-card">
-      <div class="photo-card-img-wrap">
-        <a href="{{ photo.image.url }}" class="open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} - {{ photo.site.name }} ({{ photo.category.name|default:'General Site' }})">
+    <div class="public-gallery-grid">
+      {% for photo in photos %}
+      <article class="public-gallery-card">
+        <a href="{{ photo.image.url }}" class="public-gallery-image open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} — {{ photo.site.name }} ({{ photo.category.name|default:'General Site' }})">
           <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy">
+          <span class="public-gallery-zoom" aria-hidden="true">↗</span>
         </a>
-      </div>
-      <div class="photo-card-body">
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span class="badge badge-ongoing" style="font-size: 0.72rem;">{{ photo.category.name|default:"General Build" }}</span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ photo.uploaded_at|date:"M d, Y" }}</span>
-          </div>
-          <h4 style="font-size: 1rem; color: var(--navy); margin-bottom: 4px;">{{ photo.caption }}</h4>
-          <div style="font-size: 0.82rem; color: var(--text-muted);">📍 {{ photo.site.name }}</div>
+        <div class="public-gallery-card-info">
+          <div class="public-gallery-card-meta"><span>{{ photo.category.name|default:"General Site" }}</span><time datetime="{{ photo.uploaded_at|date:'c' }}">{{ photo.uploaded_at|date:"M d, Y" }}</time></div>
+          <h3>{{ photo.caption }}</h3>
+          <p><span aria-hidden="true">⌖</span>{{ photo.site.name }}</p>
         </div>
+      </article>
+      {% empty %}
+      <div class="public-gallery-empty">
+        <span class="public-empty-mark" aria-hidden="true">▧</span>
+        <span class="public-kicker-dark">No updates to show</span>
+        <h2>This category is quiet for now.</h2>
+        <p>New site photos will appear here as project teams share updates.</p>
+        {% if active_category %}<a href="{% url 'core:gallery' %}" class="public-btn-navy">Browse all work <span aria-hidden="true">→</span></a>{% endif %}
       </div>
+      {% endfor %}
     </div>
-    {% empty %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);">
-      <div style="font-size: 2.5rem; margin-bottom: 1rem;">📷</div>
-      <h3>No Photos in This Category Yet</h3>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">As site engineers upload daily inspection photos, they appear here live.</p>
-      <a href="{% url 'core:gallery' %}" class="btn btn-outline btn-sm">View All Categories</a>
-    </div>
-    {% endfor %}
   </div>
-
-</div>
+</section>
 {% endblock %}

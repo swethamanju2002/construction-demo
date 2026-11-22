@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Core Theme & Design System Styles -->
-  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20261122">
   
   <!-- Chart.js for Client Progress Visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -21,7 +21,9 @@
 </head>
 <body>
   <!-- Global Navigation Header -->
-  {% include 'includes/navbar.html' %}
+  {% block navbar %}
+    {% include 'includes/navbar.html' %}
+  {% endblock %}
 
   <!-- Flash Notification Messages -->
   {% include 'includes/messages.html' %}

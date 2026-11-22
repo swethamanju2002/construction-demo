@@ -4,98 +4,132 @@
 {% block title %}{{ title }} | Structura CRM{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 780px; padding-top: 2.5rem; padding-bottom: 4rem;">
-  
-  <div style="margin-bottom: 1.5rem;">
-    <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline btn-sm">
-      ← Back to Portfolio Dashboard
+<div class="site-registration-page">
+  <div class="site-registration-inner">
+    <a href="{% url 'projects:admin_dashboard' %}" class="site-back-link">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to Dashboard
     </a>
-  </div>
 
-  <div class="card" style="box-shadow: var(--shadow-md);">
-    <div class="card-header">
+    <section class="site-registration-banner">
       <div>
-        <h2>{{ title }}</h2>
-        <p style="margin-top: 4px;">Define project parameters, timeline, and client assignment.</p>
+        <span class="site-registration-eyebrow">Site Administration</span>
+        <h1>{% if site %}Edit Construction Site{% else %}New Site Registration{% endif %}</h1>
+        <p>{% if site %}Update project information and work category configuration.{% else %}Add a new construction site to track progress.{% endif %}</p>
       </div>
-    </div>
+      <div class="site-registration-illustration" aria-hidden="true">
+        <svg viewBox="0 0 260 150"><path d="M18 132h224M42 132V62l52-30 54 30v70M148 132V78l70-22v76M42 62h106M94 32v100M148 78h70M62 80h18v20H62zm40 0h18v20h-18zm66 18h18v20h-18zm34 0h18v20h-18z"/><path d="M116 132V92h20v40M54 132V52M194 56V34M194 34l12 22M30 132l12-16h14l12 16"/></svg>
+      </div>
+    </section>
 
-    <form method="post">
+    <section class="site-registration-card">
+      <div class="site-registration-card-heading">
+        <span class="site-section-number">01</span>
+        <div><h2>Site Details</h2><p>Complete the project information below.</p></div>
+      </div>
+
+      <form method="post" id="siteRegistrationForm">
       {% csrf_token %}
-      
+
       {% if form.non_field_errors %}
-      <div class="alert alert-error">
+      <div class="alert alert-error site-form-alert">
         {{ form.non_field_errors }}
       </div>
       {% endif %}
 
-      <div class="form-group">
-        <label class="form-label" for="id_name">Project / Site Name *</label>
-        {{ form.name }}
-        {% if form.name.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.name.errors.0 }}</div>{% endif %}
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="site-form-grid">
         <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="form-label" for="id_client" style="margin-bottom: 0;">Assigned Client / Homeowner *</label>
-            <button type="button" id="openClientModalBtn" class="btn btn-sm btn-amber" style="padding: 3px 10px; font-size: 0.78rem; font-weight: 700;">
-              + Quick Add New Client
-            </button>
+          <label class="form-label" for="id_name">Site Name *</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="site-field-error">{{ form.name.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_site_address">Place / Location *</label>
+          {{ form.site_address }}
+          {% if form.site_address.errors %}<div class="site-field-error">{{ form.site_address.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <div class="site-client-label">
+            <label class="form-label" for="id_client">Assigned Client *</label>
+            <button type="button" id="openClientModalBtn" class="site-quick-add">+ Quick Add</button>
           </div>
           {{ form.client }}
-          <div id="clientCreatedFeedback" style="display: none; color: var(--success); font-size: 0.82rem; font-weight: 600; margin-top: 4px;"></div>
-          {% if form.client.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.client.errors.0 }}</div>{% endif %}
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Only clients authorized here can view this project dashboard.</div>
+          <div id="clientCreatedFeedback" class="site-success-feedback"></div>
+          {% if form.client.errors %}<div class="site-field-error">{{ form.client.errors.0 }}</div>{% endif %}
         </div>
 
         <div class="form-group">
           <label class="form-label" for="id_status">Project Status *</label>
           {{ form.status }}
-          {% if form.status.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.status.errors.0 }}</div>{% endif %}
+          {% if form.status.errors %}<div class="site-field-error">{{ form.status.errors.0 }}</div>{% endif %}
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label" for="id_site_address">Site Physical Address *</label>
-        {{ form.site_address }}
-        {% if form.site_address.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.site_address.errors.0 }}</div>{% endif %}
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
         <div class="form-group">
-          <label class="form-label" for="id_start_date">Groundbreaking / Start Date *</label>
+          <label class="form-label" for="id_start_date">Start Date *</label>
           {{ form.start_date }}
-          {% if form.start_date.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.start_date.errors.0 }}</div>{% endif %}
+          {% if form.start_date.errors %}<div class="site-field-error">{{ form.start_date.errors.0 }}</div>{% endif %}
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="id_estimated_completion_date">Estimated Handover Date *</label>
+          <label class="form-label" for="id_estimated_completion_date">Estimated Completion Date *</label>
           {{ form.estimated_completion_date }}
-          {% if form.estimated_completion_date.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.estimated_completion_date.errors.0 }}</div>{% endif %}
+          {% if form.estimated_completion_date.errors %}<div class="site-field-error">{{ form.estimated_completion_date.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group site-manager-field">
+          <label class="form-label" for="id_project_manager">Lead Project Engineer / Architect *</label>
+          {{ form.project_manager }}
+          {% if form.project_manager.errors %}<div class="site-field-error">{{ form.project_manager.errors.0 }}</div>{% endif %}
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="id_project_manager">Lead Project Engineer / Architect *</label>
-        {{ form.project_manager }}
-        {% if form.project_manager.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.project_manager.errors.0 }}</div>{% endif %}
+      <div class="site-category-heading">
+        <span class="site-section-number">02</span>
+        <div><h2>Work Categories</h2><p>Mandatory work streams and optional project features.</p></div>
       </div>
 
-      <div style="background: var(--surface-subtle); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 1rem; margin-bottom: 1.5rem;">
-        <div style="font-weight: 700; font-size: 0.88rem; color: var(--navy); margin-bottom: 4px;">
-          ℹ Category & Subtask Automation Notice
+      <div class="site-category-grid">
+        <div class="site-category-card mandatory">
+          <span class="site-category-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 12h6M9 16h6"/></svg></span>
+          <div><strong>Building Work</strong><small><span>✓</span> Mandatory</small></div>
+          <input type="checkbox" checked disabled aria-label="Building Work is mandatory">
         </div>
-        <p style="font-size: 0.84rem; margin: 0; color: var(--text-secondary);">
-          Upon site creation, <strong>Building Work, Electrical Work, and Plumbing Work</strong> will be automatically enabled with their standard engineering checklists. Optional categories (Showcase Work, Wall Ceiling Work) will be initialized ready to be toggled.
-        </p>
+        <div class="site-category-card mandatory">
+          <span class="site-category-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h8l-1 8 10-12h-8z"/></svg></span>
+          <div><strong>Electrical Work</strong><small><span>✓</span> Mandatory</small></div>
+          <input type="checkbox" checked disabled aria-label="Electrical Work is mandatory">
+        </div>
+        <div class="site-category-card mandatory">
+          <span class="site-category-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10c0 5 2 8 5 8s5-3 5-8M5 21h14"/></svg></span>
+          <div><strong>Plumbing Work</strong><small><span>✓</span> Mandatory</small></div>
+          <input type="checkbox" checked disabled aria-label="Plumbing Work is mandatory">
+        </div>
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline">Cancel</a>
-        <button type="submit" class="btn btn-primary">Save & Continue to Task Manager →</button>
+      <div class="site-category-grid optional">
+        <label class="site-category-card optional-card" for="id_showcase_work">
+          <span class="site-category-icon"><svg viewBox="0 0 24 24"><path d="M4 21V7l8-4 8 4v14M8 21v-8h8v8M8 9h8"/></svg></span>
+          <span class="site-category-copy"><strong>Showcase Work</strong><small>Optional feature</small></span>
+          <span class="site-toggle">{{ form.showcase_work }}</span>
+        </label>
+        <label class="site-category-card optional-card" for="id_wall_ceiling_work">
+          <span class="site-category-icon"><svg viewBox="0 0 24 24"><path d="M3 5h18M5 5v14M19 5v14M8 9h8M8 13h8M8 17h8"/></svg></span>
+          <span class="site-category-copy"><strong>Wall Ceiling Work</strong><small>Optional feature</small></span>
+          <span class="site-toggle">{{ form.wall_ceiling_work }}</span>
+        </label>
       </div>
-    </form>
+
+      <div class="site-form-actions">
+        <button type="reset" class="btn site-reset-btn">Reset</button>
+        <button type="submit" class="btn site-register-btn">
+          {% if site %}Save Changes{% else %}Register Site{% endif %}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      </form>
+    </section>
   </div>
 </div>
 

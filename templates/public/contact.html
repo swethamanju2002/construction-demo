@@ -1,123 +1,74 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Contact Engineering Team | Structura CRM{% endblock %}
+{% block title %}Contact Structura | Start a Project Conversation{% endblock %}
 
 {% block content %}
-<section style="background: var(--navy); color: #fff; padding: 4rem 0 3.5rem;">
-  <div class="container">
-    <span class="badge badge-ongoing" style="margin-bottom: 8px;">Direct Communications</span>
-    <h1 style="color: #fff; font-size: 2.5rem; margin-bottom: 0.75rem;">Get in Touch with Our Project Leads</h1>
-    <p style="color: rgba(255, 255, 255, 0.85); font-size: 1.15rem; max-width: 650px;">
-      Schedule an on-site structural appraisal, request a project estimation, or inquire about personalized client portal tracking.
-    </p>
+<section class="public-inner-hero public-contact-hero">
+  <div class="container public-inner-hero-content">
+    <span class="public-kicker"><span></span> We’re ready to listen</span>
+    <h1>Tell us what you’re planning.</h1>
+    <p>Questions about a project, our process, or client progress tracking? Send a note to our team.</p>
+    <div class="public-breadcrumb"><a href="{% url 'core:home' %}">Home</a><span>/</span><strong>Contact</strong></div>
   </div>
 </section>
 
-<div class="container" style="padding-top: 3.5rem; padding-bottom: 5rem;">
-  <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; align-items: start;" class="contact-grid">
-    
-    <!-- Contact Form Card -->
-    <div class="card" style="box-shadow: var(--shadow-md);">
-      <h2 style="margin-bottom: 0.5rem;">Send a Project Inquiry</h2>
-      <p style="margin-bottom: 1.5rem;">Fill out the specifications below and our engineering team will respond within 24 hours.</p>
-
-      <form method="post" action="{% url 'core:contact' %}">
+<section class="public-contact-section">
+  <div class="container public-contact-layout">
+    <div class="public-contact-form-card">
+      <div class="public-contact-form-heading">
+        <span class="public-kicker-dark">Project inquiry</span>
+        <h2>Start a conversation</h2>
+        <p>Share a few details and our project team will follow up.</p>
+      </div>
+      <form method="post" action="{% url 'core:contact' %}" class="public-contact-form">
         {% csrf_token %}
-
-        {% if form.non_field_errors %}
-        <div class="alert alert-error">
-          {{ form.non_field_errors }}
-        </div>
-        {% endif %}
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="public-contact-fields">
           <div class="form-group">
-            <label class="form-label">Full Name *</label>
+            <label class="form-label" for="{{ form.name.id_for_label }}">Full name *</label>
             {{ form.name }}
-            {% if form.name.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.name.errors.0 }}</div>{% endif %}
+            {% if form.name.errors %}<div class="site-field-error">{{ form.name.errors.0 }}</div>{% endif %}
           </div>
-
           <div class="form-group">
-            <label class="form-label">Email Address *</label>
+            <label class="form-label" for="{{ form.email.id_for_label }}">Email address *</label>
             {{ form.email }}
-            {% if form.email.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.email.errors.0 }}</div>{% endif %}
+            {% if form.email.errors %}<div class="site-field-error">{{ form.email.errors.0 }}</div>{% endif %}
           </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div class="form-group">
-            <label class="form-label">Phone Number</label>
+            <label class="form-label" for="{{ form.phone.id_for_label }}">Phone number</label>
             {{ form.phone }}
+            {% if form.phone.errors %}<div class="site-field-error">{{ form.phone.errors.0 }}</div>{% endif %}
           </div>
-
           <div class="form-group">
-            <label class="form-label">Project Subject *</label>
+            <label class="form-label" for="{{ form.subject.id_for_label }}">What can we help with? *</label>
             {{ form.subject }}
-            {% if form.subject.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.subject.errors.0 }}</div>{% endif %}
+            {% if form.subject.errors %}<div class="site-field-error">{{ form.subject.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group public-contact-message">
+            <label class="form-label" for="{{ form.message.id_for_label }}">Project details *</label>
+            {{ form.message }}
+            {% if form.message.errors %}<div class="site-field-error">{{ form.message.errors.0 }}</div>{% endif %}
           </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Project Requirements & Timeline *</label>
-          {{ form.message }}
-          {% if form.message.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.message.errors.0 }}</div>{% endif %}
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">
-          Submit Project Inquiry →
-        </button>
+        <button type="submit" class="btn public-btn-navy">Send inquiry <span aria-hidden="true">→</span></button>
       </form>
     </div>
 
-    <!-- Contact Information & Map Placeholder -->
-    <div>
-      <div class="card" style="margin-bottom: 1.5rem; background: var(--surface-subtle);">
-        <h3 style="margin-bottom: 1rem;">Corporate Headquarters</h3>
-        
-        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-          <div style="display: flex; gap: 12px; align-items: flex-start;">
-            <div style="color: var(--primary); font-size: 1.25rem;">📍</div>
-            <div>
-              <strong>Headquarters & Design Studio</strong>
-              <p style="margin: 2px 0 0; font-size: 0.9rem;">450 Architecture Blvd, Suite 800<br>Metropolis Engineering District, ME 04101</p>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 12px; align-items: flex-start;">
-            <div style="color: var(--amber); font-size: 1.25rem;">📞</div>
-            <div>
-              <strong>Site Hotline & Inquiries</strong>
-              <p style="margin: 2px 0 0; font-size: 0.9rem;">+1 (800) 555-STRUCT<br>Direct: +1 (555) 019-4820</p>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 12px; align-items: flex-start;">
-            <div style="color: var(--accent); font-size: 1.25rem;">✉</div>
-            <div>
-              <strong>Email Operations</strong>
-              <p style="margin: 2px 0 0; font-size: 0.9rem;">contact@structuracrm.com<br>bids@structuracrm.com</p>
-            </div>
-          </div>
-        </div>
+    <aside class="public-contact-aside">
+      <div class="public-contact-aside-top">
+        <span class="public-contact-aside-icon">S</span>
+        <span class="public-kicker">Structura project team</span>
+        <h2>Good communication is part of every good build.</h2>
+        <p>Reach out and we’ll help connect you with the right person.</p>
       </div>
-
-      <!-- Map Mockup Placeholder -->
-      <div class="card" style="padding: 1.5rem; text-align: center; border: 2px dashed var(--border); background: #FAFBFD;">
-        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺</div>
-        <div style="font-weight: 700; color: var(--navy); margin-bottom: 4px;">Metropolis Civil HQ Map</div>
-        <p style="font-size: 0.82rem; margin-bottom: 0;">Lat: 40.7128° N, Long: 74.0060° W<br>Central Engineering District & Materials Yard</p>
+      <div class="public-contact-details">
+        <div><span class="public-contact-symbol">⌖</span><p><strong>Visit our studio</strong><span>450 Architecture Blvd, Suite 800<br>Metropolis Engineering District</span></p></div>
+        <div><span class="public-contact-symbol">↗</span><p><strong>Call the team</strong><span>+1 (800) 555-STRUCT<br>Direct: +1 (555) 019-4820</span></p></div>
+        <div><span class="public-contact-symbol">@</span><p><strong>Email operations</strong><span>contact@structuracrm.com</span></p></div>
       </div>
-    </div>
-
+      <div class="public-contact-note"><span>01</span><p><strong>What happens next?</strong><br>We review your message and follow up with the next steps for your inquiry.</p></div>
+    </aside>
   </div>
-</div>
-
-<style>
-  @media (max-width: 900px) {
-    .contact-grid {
-      grid-template-columns: 1fr !important;
-    }
-  }
-</style>
+</section>
 {% endblock %}

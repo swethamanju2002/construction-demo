@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from datetime import date
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Avg
@@ -44,10 +45,37 @@ def admin_dashboard(request):
         sites_qs = sites_qs.filter(status=status_filter)
 
     sites = list(sites_qs)
-    total_sites = len(sites)
-    ongoing_count = sum(1 for s in sites if s.status == ConstructionSite.STATUS_ONGOING)
-    completed_count = sum(1 for s in sites if s.status == ConstructionSite.STATUS_COMPLETED)
-    planning_count = sum(1 for s in sites if s.status == ConstructionSite.STATUS_PLANNING)
+
+    # Dashboard metrics are derived from real records. "Delayed" uses the explicit
+    # on-hold status or a past estimated completion date for incomplete ongoing work.
+    portfolio_sites = ConstructionSite.objects.all().select_related('client').prefetch_related(
+        'category_progresses__category'
+    )
+    portfolio_list = list(portfolio_sites)
+    today = date.today()
+    total_sites = len(portfolio_list)
+    ongoing_count = sum(
+        1 for s in portfolio_list
+        if s.status == ConstructionSite.STATUS_ONGOING
+    )
+    on_track_count = sum(
+        1 for s in portfolio_list
+        if s.status == ConstructionSite.STATUS_ONGOING
+        and s.estimated_completion_date >= today
+        and s.calculate_overall_progress() < Decimal('100.00')
+    )
+    delayed_count = sum(
+        1 for s in portfolio_list
+        if s.status == ConstructionSite.STATUS_ON_HOLD
+        or (
+            s.status == ConstructionSite.STATUS_ONGOING
+            and s.estimated_completion_date < today
+            and s.calculate_overall_progress() < Decimal('100.00')
+        )
+    )
+    completed_count = sum(1 for s in portfolio_list if s.status == ConstructionSite.STATUS_COMPLETED)
+    planning_count = sum(1 for s in portfolio_list if s.status == ConstructionSite.STATUS_PLANNING)
+    in_progress_count = ongoing_count
     total_clients = User.objects.filter(is_client=True).count()
 
     # Portfolio average completion
@@ -60,6 +88,9 @@ def admin_dashboard(request):
         'sites': sites,
         'total_sites': total_sites,
         'ongoing_count': ongoing_count,
+        'on_track_count': on_track_count,
+        'in_progress_count': in_progress_count,
+        'delayed_count': delayed_count,
         'completed_count': completed_count,
         'planning_count': planning_count,
         'total_clients': total_clients,

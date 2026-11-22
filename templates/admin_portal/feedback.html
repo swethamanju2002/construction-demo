@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Client Feedback | Structura CRM{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+  {% with admin_active='feedback' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main">
+      <section class="admin-hero">
+        <div class="admin-hero-content">
+          <span class="admin-eyebrow">Client communications</span>
+          <h1>Client feedback</h1>
+          <p>Read and track feedback submitted from client project portals.</p>
+        </div>
+      </section>
+
+      <nav class="inquiry-filters" aria-label="Filter client feedback">
+        <a href="?status=new" class="{% if feedback_status_filter == 'new' %}active{% endif %}">New</a>
+        <a href="?status=read" class="{% if feedback_status_filter == 'read' %}active{% endif %}">Read</a>
+        <a href="?status=all" class="{% if feedback_status_filter == 'all' %}active{% endif %}">All feedback</a>
+      </nav>
+
+      <section class="inquiry-list" aria-label="Client feedback entries">
+        {% for entry in feedback_entries %}
+          <article class="inquiry-card client-feedback-admin-card" id="feedback-{{ entry.id }}">
+            <header>
+              <div>
+                <span class="admin-eyebrow navy">{{ entry.created_at|date:"M d, Y · g:i A" }}</span>
+                <h2>{{ entry.site.name }}</h2>
+                <p class="inquiry-sender">{{ entry.author.get_full_name|default:entry.author.username }} · {{ entry.author.email|default:"No email provided" }}</p>
+              </div>
+              <span class="inquiry-status {% if entry.admin_read_at %}addressed{% endif %}">
+                {% if entry.admin_read_at %}Read{% else %}New feedback{% endif %}
+              </span>
+            </header>
+            {% if entry.update_notification %}
+              <p class="feedback-update-context">In response to: <strong>{{ entry.update_notification.title }}</strong> · {{ entry.update_notification.message }}</p>
+            {% endif %}
+            <p class="inquiry-message">{{ entry.message|linebreaksbr }}</p>
+            <form method="post" class="inquiry-action">
+              {% csrf_token %}
+              <input type="hidden" name="feedback_id" value="{{ entry.id }}">
+              <input type="hidden" name="is_read" value="{% if entry.admin_read_at %}false{% else %}true{% endif %}">
+              <button type="submit" class="btn {% if entry.admin_read_at %}btn-outline{% else %}btn-primary{% endif %}">
+                {% if entry.admin_read_at %}Mark unread{% else %}Mark as read{% endif %}
+              </button>
+            </form>
+          </article>
+        {% empty %}
+          <div class="inquiry-empty">
+            <h2>No feedback in this view</h2>
+            <p>Client feedback will appear here as soon as it’s submitted.</p>
+          </div>
+        {% endfor %}
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}

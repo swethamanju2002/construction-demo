@@ -1,0 +1,37 @@
+<aside class="client-sidebar" aria-label="Client portal navigation">
+  <div class="client-sidebar-header">
+    <a href="{% url 'projects:client_dashboard' %}" class="client-sidebar-brand">
+      <span class="client-sidebar-mark">S</span>
+      <span><strong>STRUCTURA</strong><small>CLIENT PORTAL</small></span>
+    </a>
+    {% include 'includes/notification_center.html' %}
+  </div>
+  <div class="client-sidebar-user">
+    <span class="client-sidebar-avatar">{{ user.first_name|first|default:user.username|first|upper }}</span>
+    <span><strong>{{ user.get_full_name|default:user.username }}</strong><small>Project client</small></span>
+  </div>
+  <nav class="client-sidebar-nav">
+    <span class="client-sidebar-label">WORKSPACE</span>
+    <a href="{% url 'projects:client_dashboard' %}" class="{% if client_active == 'dashboard' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-12h8V3h-8z"/></svg>
+      <span>My Project</span>
+    </a>
+    <a href="{% url 'projects:client_feedback' %}" class="{% if client_active == 'feedback' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4V5zM8 9h8M8 13h5"/></svg>
+      <span>My Feedback</span>
+    </a>
+  </nav>
+  {% if site %}
+    <div class="client-sidebar-project">
+      <span>ACTIVE PROJECT</span>
+      <strong>{{ site.name }}</strong>
+      <small><i></i>{{ site.get_status_display }}</small>
+    </div>
+  {% endif %}
+  <div class="client-sidebar-footer">
+    <a href="{% url 'accounts:logout' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>
+      <span>Log out</span>
+    </a>
+  </div>
+</aside>

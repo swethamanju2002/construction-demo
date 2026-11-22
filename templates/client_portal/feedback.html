@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}My Feedback | Structura Client Portal{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="client-portal-shell">
+  {% with client_active='feedback' %}{% include 'includes/client_sidebar.html' %}{% endwith %}
+  <div class="client-workspace client-feedback-workspace">
+    <main class="client-feedback-page">
+      <header class="client-feedback-heading">
+        <span class="client-section-kicker">Your voice matters</span>
+        <h1>Project feedback</h1>
+        <p>Share a note with your project team. Feedback submitted here is visible to the site administrators.</p>
+      </header>
+
+      {% if has_assigned_sites %}
+        <section class="client-feedback-form-card">
+          <div class="client-feedback-card-heading">
+            <span>✦</span>
+            <div><h2>Send feedback</h2><p>Questions, concerns, and suggestions are all welcome.</p></div>
+          </div>
+          <form method="post" class="client-feedback-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="feedback-form-errors">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="form-group">
+              <label for="{{ form.site.id_for_label }}">Project</label>
+              {{ form.site }}
+              {% for error in form.site.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="form-group">
+              <label for="{{ form.message.id_for_label }}">Your feedback</label>
+              {{ form.message }}
+              {% for error in form.message.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+            <button type="submit" class="client-feedback-submit">Send to the project team <span aria-hidden="true">→</span></button>
+          </form>
+        </section>
+      {% else %}
+        <section class="client-feedback-empty">
+          <span aria-hidden="true">⌂</span>
+          <h2>No project is assigned yet</h2>
+          <p>Once a site is connected to your account, you’ll be able to send project-specific feedback here.</p>
+        </section>
+      {% endif %}
+
+      <section class="client-feedback-history">
+        <div class="client-feedback-history-heading">
+          <div><span class="client-section-kicker">Your messages</span><h2>Feedback history</h2></div>
+          <span>{{ feedback_entries|length }} sent</span>
+        </div>
+        <div class="client-feedback-history-list">
+          {% for entry in feedback_entries %}
+            <article class="client-feedback-entry">
+              <header><strong>{{ entry.site.name }}</strong><time>{{ entry.created_at|date:"M d, Y · g:i A" }}</time></header>
+              <p>{{ entry.message|linebreaksbr }}</p>
+              {% if entry.update_notification %}
+                <small>In response to: {{ entry.update_notification.title }}</small>
+              {% else %}
+                <small>Sent to your project team</small>
+              {% endif %}
+            </article>
+          {% empty %}
+            <div class="client-feedback-empty-history">Your sent feedback will appear here.</div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}

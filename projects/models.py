@@ -268,6 +268,7 @@ class Notification(models.Model):
     KIND_DUE_DATE = 'due_date'
     KIND_SITE_ALERT = 'site_alert'
     KIND_CONTACT_INQUIRY = 'contact_inquiry'
+    KIND_CLIENT_FEEDBACK = 'client_feedback'
 
     KIND_CHOICES = [
         (KIND_TASK_PROGRESS, 'Task and progress update'),
@@ -277,6 +278,7 @@ class Notification(models.Model):
         (KIND_DUE_DATE, 'Due date reminder'),
         (KIND_SITE_ALERT, 'Site alert or milestone'),
         (KIND_CONTACT_INQUIRY, 'Contact inquiry'),
+        (KIND_CLIENT_FEEDBACK, 'Client feedback'),
     ]
 
     recipient = models.ForeignKey(
@@ -298,6 +300,8 @@ class Notification(models.Model):
     event_key = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True, blank=True)
+    feedback_requested = models.BooleanField(default=False)
+    feedback_prompt_dismissed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -313,4 +317,37 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.recipient.username})"
+
+
+class ClientFeedback(models.Model):
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='submitted_site_feedback',
+    )
+    site = models.ForeignKey(
+        ConstructionSite,
+        on_delete=models.CASCADE,
+        related_name='client_feedback',
+    )
+    update_notification = models.OneToOneField(
+        Notification,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='feedback_response',
+    )
+    message = models.TextField(max_length=4000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    admin_read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['admin_read_at', '-created_at']),
+            models.Index(fields=['author', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Feedback from {self.author.username} on {self.site.name}"
 

@@ -194,6 +194,7 @@ def notify_site_assignment_and_changes(sender, instance, created, **kwargs):
             kind=Notification.KIND_SITE_STATUS,
             title='Project status updated',
             message=f'{instance.name} is now {instance.get_status_display()}.',
+            feedback_requested=True,
         )
         if instance.status in (
             ConstructionSite.STATUS_ON_HOLD,
@@ -226,6 +227,7 @@ def notify_site_assignment_and_changes(sender, instance, created, **kwargs):
                 f'The estimated completion date for {instance.name} is now '
                 f'{instance.estimated_completion_date:%b %d, %Y}.'
             ),
+            feedback_requested=True,
         )
 
 
@@ -261,6 +263,7 @@ def notify_category_progress_changes(sender, instance, created, **kwargs):
                 f'{category_name} is now {instance.progress_percentage}% complete '
                 f'({instance.completed_tasks_count} of {instance.total_tasks_count} tasks).'
             ),
+            feedback_requested=True,
         )
         if old_progress < 100 <= instance.progress_percentage:
             notify_site_admins(
@@ -283,6 +286,7 @@ def notify_category_progress_changes(sender, instance, created, **kwargs):
                 f'{category_name} was {state}. Project progress is calculated '
                 'using enabled work categories.'
             ),
+            feedback_requested=True,
         )
 
 
@@ -296,6 +300,7 @@ def notify_client_of_project_photo(sender, instance, created, **kwargs):
         kind=Notification.KIND_PROJECT_UPDATE,
         title='New site photo update',
         message=f'{category_name}: {instance.caption}',
+        feedback_requested=True,
     )
 
 

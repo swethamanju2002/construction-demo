@@ -3,7 +3,13 @@
 
 {% block title %}{{ site.name }} | Client Project Portal{% endblock %}
 
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
 {% block content %}
+<div class="client-portal-shell">
+  {% with client_active='dashboard' %}{% include 'includes/client_sidebar.html' %}{% endwith %}
+  <div class="client-workspace">
 <div class="client-portal">
   <section class="client-project-hero">
     <div class="container client-project-hero-inner">
@@ -97,6 +103,34 @@
     </section>
   </main>
 </div>
+
+    <div class="feedback-prompt-overlay" data-feedback-modal hidden role="dialog" aria-modal="true" aria-labelledby="feedbackPromptTitle">
+      <section class="feedback-prompt-card">
+        <button type="button" class="feedback-prompt-close" data-feedback-dismiss aria-label="Close feedback prompt">×</button>
+        <span class="feedback-prompt-kicker">PROJECT CHECK-IN</span>
+        <h2 id="feedbackPromptTitle" data-feedback-title>How does this update look?</h2>
+        <p data-feedback-context></p>
+        <form data-feedback-form
+              data-pending-url="{% url 'projects:api_pending_client_feedback' %}"
+              data-submit-url="{% url 'projects:api_submit_client_feedback' %}"
+              data-dismiss-url="{% url 'projects:api_dismiss_client_feedback' %}">
+          {% csrf_token %}
+          <input type="hidden" name="notification_id">
+          <label for="feedbackPromptMessage">Your feedback</label>
+          <textarea id="feedbackPromptMessage" name="message" rows="5" minlength="5" maxlength="4000" required placeholder="Share your thoughts with the project team…"></textarea>
+          <p class="feedback-prompt-error" data-feedback-error role="alert" hidden></p>
+          <div class="feedback-prompt-actions">
+            <button type="button" class="feedback-prompt-later" data-feedback-dismiss>Not now</button>
+            <button type="submit" class="feedback-prompt-submit">Send feedback</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/client_dashboard.js' %}"></script>{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/client_dashboard.js' %}"></script>
+<script src="{% static 'js/client_feedback.js' %}?v=20261122-feedback"></script>
+{% endblock %}

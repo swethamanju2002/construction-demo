@@ -1,6 +1,12 @@
 from django import forms
 from accounts.models import User
-from .models import ConstructionSite, ProjectUpdateImage, SiteCategoryProgress, SiteTask
+from .models import (
+    ClientFeedback,
+    ConstructionSite,
+    ProjectUpdateImage,
+    SiteCategoryProgress,
+    SiteTask,
+)
 
 
 class ConstructionSiteForm(forms.ModelForm):
@@ -112,3 +118,26 @@ class ProjectUpdateImageForm(forms.ModelForm):
                 'class': 'form-select'
             }),
         }
+
+
+class ClientFeedbackForm(forms.ModelForm):
+    message = forms.CharField(
+        min_length=5,
+        max_length=4000,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 6,
+            'placeholder': 'Tell us how the latest project update looks to you.',
+        }),
+    )
+
+    class Meta:
+        model = ClientFeedback
+        fields = ['site', 'message']
+        widgets = {
+            'site': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['site'].queryset = ConstructionSite.objects.none()

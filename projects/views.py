@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Avg
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import Http404, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -14,8 +14,9 @@ from accounts.models import User
 from accounts.forms import ClientCreationForm
 from accounts.permissions import site_admin_required, client_required
 from core.models import ContactInquiry
-from .forms import ConstructionSiteForm, ProjectUpdateImageForm
+from .forms import ClientFeedbackForm, ConstructionSiteForm, ProjectUpdateImageForm
 from .models import (
+    ClientFeedback,
     ConstructionSite,
     Notification,
     WorkCategory,
@@ -24,7 +25,21 @@ from .models import (
     ProjectUpdateImage,
     SiteProgressHistory,
 )
-from .notifications import sync_scheduled_notifications
+from .notifications import notify_site_admins, sync_scheduled_notifications
+
+
+def create_client_feedback_notification(feedback):
+    notify_site_admins(
+        kind=Notification.KIND_CLIENT_FEEDBACK,
+        title='New client feedback',
+        message=(
+            f'{feedback.author.get_full_name() or feedback.author.username} '
+            f'shared feedback about {feedback.site.name}.'
+        ),
+        site=feedback.site,
+        url=f'{reverse("projects:admin_feedback")}#feedback-{feedback.id}',
+        event_key=f'client-feedback:{feedback.id}',
+    )
 
 
 # ==============================================================================
@@ -228,6 +243,172 @@ def admin_inquiries(request):
         'inquiry_status_filter': status_filter,
         'admin_active': 'inquiries',
     })
+
+
+@site_admin_required
+def admin_feedback(request):
+    if request.method == 'POST':
+        feedback_id = request.POST.get('feedback_id', '')
+        if not feedback_id.isdecimal():
+            raise Http404
+        feedback = get_object_or_404(
+            ClientFeedback,
+            pk=feedback_id,
+        )
+        feedback.admin_read_at = (
+            timezone.now()
+            if request.POST.get('is_read') == 'true'
+            else None
+        )
+        feedback.save(update_fields=['admin_read_at'])
+        Notification.objects.filter(
+            recipient=request.user,
+            event_key=f'client-feedback:{feedback.id}',
+        ).update(read_at=feedback.admin_read_at)
+        return redirect(f"{reverse('projects:admin_feedback')}#feedback-{feedback.id}")
+
+    status_filter = request.GET.get('status', 'new')
+    feedback_entries = ClientFeedback.objects.select_related(
+        'author', 'site', 'update_notification'
+    )
+    if status_filter == 'new':
+        feedback_entries = feedback_entries.filter(admin_read_at__isnull=True)
+    elif status_filter == 'read':
+        feedback_entries = feedback_entries.filter(admin_read_at__isnull=False)
+    else:
+        status_filter = 'all'
+    return render(request, 'admin_portal/feedback.html', {
+        'feedback_entries': feedback_entries,
+        'feedback_status_filter': status_filter,
+        'admin_active': 'feedback',
+    })
+
+
+@client_required
+def client_feedback(request):
+    assigned_sites = ConstructionSite.objects.filter(client=request.user)
+    form = ClientFeedbackForm(
+        request.POST if request.method == 'POST' else None
+    )
+    form.fields['site'].queryset = assigned_sites
+
+    if request.method == 'POST' and form.is_valid():
+        feedback = form.save(commit=False)
+        feedback.author = request.user
+        feedback.save()
+        create_client_feedback_notification(feedback)
+        messages.success(request, 'Your feedback was sent to the project team.')
+        return redirect('projects:client_feedback')
+
+    if request.method == 'GET':
+        requested_site_id = request.GET.get('site', '')
+        requested_site = (
+            assigned_sites.filter(pk=requested_site_id).first()
+            if requested_site_id.isdecimal()
+            else None
+        )
+        default_site = requested_site or assigned_sites.first()
+        if default_site:
+            form.fields['site'].initial = default_site.pk
+
+    return render(request, 'client_portal/feedback.html', {
+        'form': form,
+        'feedback_entries': ClientFeedback.objects.filter(
+            author=request.user
+        ).select_related('site', 'update_notification'),
+        'has_assigned_sites': assigned_sites.exists(),
+        'client_active': 'feedback',
+    })
+
+
+@client_required
+@require_GET
+def api_pending_client_feedback(request):
+    notification = (
+        Notification.objects.filter(
+            recipient=request.user,
+            site__client=request.user,
+            feedback_requested=True,
+            feedback_prompt_dismissed_at__isnull=True,
+            feedback_response__isnull=True,
+        )
+        .select_related('site')
+        .order_by('created_at')
+        .first()
+    )
+    if notification is None:
+        return JsonResponse({'request': None})
+    return JsonResponse({
+        'request': {
+            'notification_id': notification.id,
+            'site_id': notification.site_id,
+            'site_name': notification.site.name,
+            'title': notification.title,
+            'message': notification.message,
+            'created_at': notification.created_at.isoformat(),
+        },
+    })
+
+
+@client_required
+@require_POST
+def api_submit_client_feedback(request):
+    notification_id = request.POST.get('notification_id')
+    message = request.POST.get('message', '').strip()
+    if not notification_id:
+        return HttpResponseBadRequest('notification_id is required')
+    if not notification_id.isdecimal():
+        return HttpResponseBadRequest('notification_id must be an integer')
+    if not 5 <= len(message) <= 4000:
+        return JsonResponse({
+            'success': False,
+            'error': 'Feedback must be between 5 and 4000 characters.',
+        }, status=400)
+
+    notification = get_object_or_404(
+        Notification.objects.filter(
+            recipient=request.user,
+            site__client=request.user,
+            feedback_requested=True,
+            feedback_prompt_dismissed_at__isnull=True,
+            feedback_response__isnull=True,
+        ),
+        pk=notification_id,
+    )
+    feedback, created = ClientFeedback.objects.get_or_create(
+        update_notification=notification,
+        defaults={
+            'author': request.user,
+            'site': notification.site,
+            'message': message,
+        },
+    )
+    if created:
+        create_client_feedback_notification(feedback)
+    return JsonResponse({'success': True})
+
+
+@client_required
+@require_POST
+def api_dismiss_client_feedback(request):
+    notification_id = request.POST.get('notification_id')
+    if not notification_id:
+        return HttpResponseBadRequest('notification_id is required')
+    if not notification_id.isdecimal():
+        return HttpResponseBadRequest('notification_id must be an integer')
+    notification = get_object_or_404(
+        Notification.objects.filter(
+            recipient=request.user,
+            site__client=request.user,
+            feedback_requested=True,
+            feedback_prompt_dismissed_at__isnull=True,
+            feedback_response__isnull=True,
+        ),
+        pk=notification_id,
+    )
+    notification.feedback_prompt_dismissed_at = timezone.now()
+    notification.save(update_fields=['feedback_prompt_dismissed_at'])
+    return JsonResponse({'success': True})
 
 
 @login_required

@@ -8,7 +8,17 @@ from accounts.models import User
 from .models import ConstructionSite, Notification
 
 
-def create_notification(*, recipient, kind, title, message, url='', site=None, event_key=None):
+def create_notification(
+    *,
+    recipient,
+    kind,
+    title,
+    message,
+    url='',
+    site=None,
+    event_key=None,
+    feedback_requested=False,
+):
     key = event_key or uuid4().hex
     notification, _ = Notification.objects.get_or_create(
         recipient=recipient,
@@ -19,12 +29,21 @@ def create_notification(*, recipient, kind, title, message, url='', site=None, e
             'message': message,
             'url': url,
             'site': site,
+            'feedback_requested': feedback_requested,
         },
     )
     return notification
 
 
-def notify_site_client(*, site, kind, title, message, event_key=None):
+def notify_site_client(
+    *,
+    site,
+    kind,
+    title,
+    message,
+    event_key=None,
+    feedback_requested=False,
+):
     return create_notification(
         recipient=site.client,
         site=site,
@@ -33,6 +52,7 @@ def notify_site_client(*, site, kind, title, message, event_key=None):
         message=message,
         url=reverse('projects:client_site_detail', args=[site.id]),
         event_key=event_key,
+        feedback_requested=feedback_requested,
     )
 
 

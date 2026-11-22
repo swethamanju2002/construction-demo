@@ -9,6 +9,7 @@ from django.utils import timezone
 from accounts.models import User
 from core.models import ContactInquiry
 from projects.models import (
+    ClientFeedback,
     ConstructionSite,
     Notification,
     ProjectUpdateImage,
@@ -278,6 +279,7 @@ class PortalPageRenderingTests(TestCase):
             '/admin-portal/clients/',
             '/admin-portal/clients/create/',
             '/admin-portal/inquiries/',
+            '/admin-portal/feedback/',
         ]
         for path in paths:
             with self.subTest(path=path):
@@ -318,6 +320,7 @@ class PortalPageRenderingTests(TestCase):
         response = self.client.get('/client-portal/dashboard/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'client-unassigned-page')
+        self.assertContains(response, 'client-sidebar')
 
 
 class NotificationTests(TestCase):
@@ -367,11 +370,13 @@ class NotificationTests(TestCase):
         self.assertTrue(Notification.objects.filter(
             recipient=self.client_user,
             kind=Notification.KIND_SITE_STATUS,
+            feedback_requested=True,
             site=self.site,
         ).exists())
         self.assertTrue(Notification.objects.filter(
             recipient=self.client_user,
             kind=Notification.KIND_SCHEDULE_CHANGE,
+            feedback_requested=True,
             site=self.site,
         ).exists())
         self.assertTrue(Notification.objects.filter(
@@ -395,6 +400,7 @@ class NotificationTests(TestCase):
             recipient=self.client_user,
             kind=Notification.KIND_PROJECT_UPDATE,
             title='New site photo update',
+            feedback_requested=True,
             site=self.site,
         ).exists())
 
@@ -497,4 +503,130 @@ class NotificationTests(TestCase):
             ).count(),
             1,
         )
+
+
+class ClientFeedbackTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='feedbackadmin',
+            password='PortalPassword123!',
+            is_site_admin=True,
+        )
+        self.client_user = User.objects.create_user(
+            username='feedbackclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.other_client = User.objects.create_user(
+            username='feedbackother',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.site = ConstructionSite.objects.create(
+            name='Feedback Test Site',
+            client=self.client_user,
+            site_address='40 Feedback Avenue',
+            start_date=timezone.localdate(),
+            estimated_completion_date=timezone.localdate() + timedelta(days=60),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+
+    def test_admin_work_update_prompts_client_and_admin_can_read_response(self):
+        task = self.site.category_progresses.get(
+            category__slug='building-work'
+        ).tasks.first()
+        task.is_completed = True
+        task.save()
+        update = Notification.objects.get(
+            recipient=self.client_user,
+            site=self.site,
+            feedback_requested=True,
+        )
+
+        self.client.force_login(self.client_user)
+        site_response = self.client.get(f'/client-portal/site/{self.site.id}/')
+        self.assertEqual(site_response.status_code, 200)
+        self.assertContains(site_response, 'client-sidebar')
+        self.assertContains(site_response, 'feedback-prompt-overlay')
+        pending = self.client.get('/client-portal/api/feedback/pending/')
+        self.assertEqual(pending.status_code, 200)
+        self.assertEqual(pending.json()['request']['notification_id'], update.id)
+
+        submitted = self.client.post('/client-portal/api/feedback/submit/', {
+            'notification_id': update.id,
+            'message': 'The progress update looks good.',
+        })
+        self.assertEqual(submitted.status_code, 200)
+        feedback = ClientFeedback.objects.get(update_notification=update)
+        self.assertEqual(feedback.author, self.client_user)
+        self.assertEqual(feedback.site, self.site)
+        self.assertEqual(
+            self.client.get('/client-portal/api/feedback/pending/').json()['request'],
+            None,
+        )
+
+        self.client.force_login(self.admin)
+        admin_page = self.client.get('/admin-portal/feedback/')
+        self.assertEqual(admin_page.status_code, 200)
+        self.assertContains(admin_page, 'The progress update looks good.')
+        self.assertTrue(Notification.objects.filter(
+            recipient=self.admin,
+            kind=Notification.KIND_CLIENT_FEEDBACK,
+            url__contains=f'#feedback-{feedback.id}',
+        ).exists())
+        self.client.post('/admin-portal/feedback/', {
+            'feedback_id': feedback.id,
+            'is_read': 'true',
+        })
+        feedback.refresh_from_db()
+        self.assertIsNotNone(feedback.admin_read_at)
+
+    def test_client_feedback_page_scopes_projects_and_shows_history(self):
+        self.client.force_login(self.client_user)
+        page = self.client.get('/client-portal/feedback/')
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'client-sidebar')
+        self.assertContains(page, 'My Feedback')
+
+        submitted = self.client.post('/client-portal/feedback/', {
+            'site': self.site.id,
+            'message': 'Please share more photos.',
+        })
+        self.assertEqual(submitted.status_code, 302)
+        self.assertEqual(ClientFeedback.objects.count(), 1)
+
+        self.client.force_login(self.other_client)
+        unauthorized = self.client.post('/client-portal/feedback/', {
+            'site': self.site.id,
+            'message': 'Trying to comment on another project.',
+        })
+        self.assertEqual(unauthorized.status_code, 200)
+        self.assertEqual(ClientFeedback.objects.count(), 1)
+
+    def test_client_can_dismiss_feedback_prompt_persistently(self):
+        update = Notification.objects.create(
+            recipient=self.client_user,
+            site=self.site,
+            kind=Notification.KIND_TASK_PROGRESS,
+            title='Progress changed',
+            message='A project task was updated.',
+            event_key='feedback-dismiss-test',
+            feedback_requested=True,
+        )
+        self.client.force_login(self.client_user)
+        dismissed = self.client.post('/client-portal/api/feedback/dismiss/', {
+            'notification_id': update.id,
+        })
+        self.assertEqual(dismissed.status_code, 200)
+        update.refresh_from_db()
+        self.assertIsNotNone(update.feedback_prompt_dismissed_at)
+        self.assertIsNone(
+            self.client.get('/client-portal/api/feedback/pending/').json()['request']
+        )
+
+        self.client.force_login(self.other_client)
+        unauthorized = self.client.post('/client-portal/api/feedback/dismiss/', {
+            'notification_id': update.id,
+        })
+        self.assertEqual(unauthorized.status_code, 404)
 

@@ -2,8 +2,13 @@
 {% load static %}
 
 {% block title %}Client Portal | Structura{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
+<div class="client-portal-shell">
+  {% with client_active='dashboard' %}{% include 'includes/client_sidebar.html' %}{% endwith %}
+  <div class="client-workspace">
 <main class="client-unassigned-page">
   <div class="client-unassigned-card">
     <div class="client-unassigned-visual">
@@ -20,4 +25,6 @@
     </div>
   </div>
 </main>
+  </div>
+</div>
 {% endblock %}

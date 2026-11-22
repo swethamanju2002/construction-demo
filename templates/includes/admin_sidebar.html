@@ -22,6 +22,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4V5zM8 9h8M8 13h5"/></svg>
       <span>Inquiries</span>
     </a>
+    <a href="{% url 'projects:admin_feedback' %}" class="admin-nav-link {% if admin_active == 'feedback' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5zM8 10h8M8 14h5"/></svg>
+      <span>Client Feedback</span>
+    </a>
     <a href="{% url 'projects:admin_site_create' %}" class="admin-nav-link {% if admin_active == 'new-site' %}active{% endif %}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       <span>New Site</span>

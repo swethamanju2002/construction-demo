@@ -25,13 +25,13 @@
       </section>
 
       <section class="admin-directory-panel">
-        <div class="admin-directory-panel-heading"><div><h2>Homeowners & clients</h2><p>Account details and project assignments</p></div><span class="admin-record-count">{{ total_clients }} total</span></div>
+        <div class="admin-directory-panel-heading"><div><h2>Homeowners & clients</h2><p>Account details, project assignments, and portal access</p></div><span class="admin-record-count">{{ total_clients }} total</span></div>
         <div class="admin-client-table-wrap">
           <table class="admin-client-table">
-            <thead><tr><th>Client</th><th>Contact</th><th>Assigned projects</th><th>Joined</th></tr></thead>
+            <thead><tr><th>Client</th><th>Contact</th><th>Assigned projects</th><th>Joined</th><th>Portal access</th></tr></thead>
             <tbody>
               {% for client in clients %}
-              <tr>
+              <tr id="client-{{ client.id }}">
                 <td>
                   <div class="admin-client-identity"><span class="admin-client-avatar">{{ client.first_name|first|default:client.username|first|upper }}</span><div><strong>{{ client.get_full_name|default:client.username }}</strong><small>@{{ client.username }}{% if client.company_name %} · {{ client.company_name }}{% endif %}</small></div></div>
                 </td>
@@ -47,9 +47,19 @@
                   </div>
                 </td>
                 <td><span class="admin-joined-date">{{ client.date_joined|date:"M d, Y" }}</span></td>
+                <td>
+                  {% if client.email %}
+                    <form method="post" action="{% url 'projects:admin_send_client_portal_access' client.id %}" class="admin-send-access-form">
+                      {% csrf_token %}
+                      <button type="submit" class="admin-send-access-btn">Send portal access</button>
+                    </form>
+                  {% else %}
+                    <span class="admin-no-client-email">Add an email address</span>
+                  {% endif %}
+                </td>
               </tr>
               {% empty %}
-              <tr><td colspan="4"><div class="admin-directory-empty"><span aria-hidden="true">♙</span><h3>No client accounts yet</h3><p>Create an account to assign a homeowner to a project.</p><a href="{% url 'projects:admin_client_create' %}" class="btn admin-card-btn">Register first client</a></div></td></tr>
+              <tr><td colspan="5"><div class="admin-directory-empty"><span aria-hidden="true">♙</span><h3>No client accounts yet</h3><p>Create an account to assign a homeowner to a project.</p><a href="{% url 'projects:admin_client_create' %}" class="btn admin-card-btn">Register first client</a></div></td></tr>
               {% endfor %}
             </tbody>
           </table>

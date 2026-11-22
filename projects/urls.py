@@ -61,5 +61,10 @@ urlpatterns = [
     # Client Management Routes (Admin)
     path('admin-portal/clients/', views.admin_client_list, name='admin_client_list'),
     path('admin-portal/clients/create/', views.admin_client_create, name='admin_client_create'),
+    path(
+        'admin-portal/clients/<int:client_id>/send-access/',
+        views.admin_send_client_portal_access,
+        name='admin_send_client_portal_access',
+    ),
     path('admin-portal/api/create-client/', views.api_create_client, name='api_create_client'),
 ]

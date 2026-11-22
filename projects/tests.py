@@ -2,10 +2,13 @@ from decimal import Decimal
 from datetime import timedelta
 from tempfile import TemporaryDirectory
 
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
+from urllib.parse import urlsplit
 from accounts.models import User
 from core.models import ContactInquiry
 from projects.models import (
@@ -413,6 +416,98 @@ class PortalPageRenderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'client-unassigned-page')
         self.assertContains(response, 'client-sidebar')
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='portal@example.test',
+    PUBLIC_BASE_URL='https://portal.example.test',
+)
+class ClientPortalAccessEmailTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='accessadmin',
+            password='PortalPassword123!',
+            is_site_admin=True,
+        )
+        self.client_user = User.objects.create_user(
+            username='accessclient',
+            email='client@example.test',
+            password='InitialClientSecret123!',
+            is_client=True,
+        )
+
+    def test_admin_can_email_username_and_password_setup_link(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse(
+                'projects:admin_send_client_portal_access',
+                kwargs={'client_id': self.client_user.id},
+            ),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        invitation = mail.outbox[0]
+        self.assertEqual(invitation.to, ['client@example.test'])
+        self.assertIn(f'Username: {self.client_user.username}', invitation.body)
+        self.assertNotIn('InitialClientSecret123!', invitation.body)
+        self.assertIn('https://portal.example.test/accounts/login/', invitation.body)
+
+        setup_url = next(
+            line for line in invitation.body.splitlines()
+            if line.startswith('https://portal.example.test/accounts/password-setup/')
+        )
+        setup_path = urlsplit(setup_url).path
+        token_response = self.client.get(setup_path)
+        self.assertEqual(token_response.status_code, 302)
+        confirm_path = token_response.url
+        setup_page = self.client.get(confirm_path)
+        self.assertContains(setup_page, 'Set your password')
+        self.assertContains(setup_page, 'form-control')
+
+        response = self.client.post(confirm_path, {
+            'new_password1': 'DifferentLongPortalPass!57',
+            'new_password2': 'DifferentLongPortalPass!57',
+        })
+        self.assertRedirects(
+            response,
+            reverse('accounts:client_password_setup_complete'),
+        )
+        self.client_user.refresh_from_db()
+        self.assertTrue(
+            self.client_user.check_password('DifferentLongPortalPass!57')
+        )
+
+    def test_admin_directory_has_send_button_and_requires_client_email(self):
+        self.client.force_login(self.admin)
+        directory = self.client.get(reverse('projects:admin_client_list'))
+        self.assertContains(directory, 'Send portal access')
+
+        self.client_user.email = ''
+        self.client_user.save(update_fields=['email'])
+        response = self.client.post(
+            reverse(
+                'projects:admin_send_client_portal_access',
+                kwargs={'client_id': self.client_user.id},
+            ),
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Add a valid email address')
+        self.assertEqual(mail.outbox, [])
+
+    def test_non_admin_cannot_send_client_portal_access(self):
+        self.client.force_login(self.client_user)
+        response = self.client.post(
+            reverse(
+                'projects:admin_send_client_portal_access',
+                kwargs={'client_id': self.client_user.id},
+            )
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(mail.outbox, [])
 
 
 class NotificationTests(TestCase):

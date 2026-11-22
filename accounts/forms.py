@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
 
 
 class StyledAuthenticationForm(AuthenticationForm):
@@ -19,13 +19,26 @@ class StyledAuthenticationForm(AuthenticationForm):
     )
 
 
+class ClientSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ('new_password1', 'new_password2'):
+            self.fields[field_name].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'new-password',
+            })
+
+
 class ClientCreationForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Set secure initial password',
         }),
-        help_text="Provide an initial password for the client to log in."
+        help_text=(
+            "Set an initial password. Use the client directory’s Send portal access "
+            "button to email the username and a secure password setup link."
+        )
     )
 
     class Meta:

@@ -1840,6 +1840,10 @@
 .admin-client-table th { padding: 12px 17px; background: #F8FAFD; color: #75869C; font-size: .63rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .admin-client-table td { padding: 14px 17px; border-top: 1px solid #EDF1F7; color: #334A68; font-size: .75rem; vertical-align: middle; }
 .admin-client-table tr:hover td { background: #FCFDFF; }
+.admin-send-access-form { margin: 0; }
+.admin-send-access-btn { padding: 8px 10px; border: 1px solid #C9DDF7; border-radius: 6px; color: #1769AA; background: #F1F7FE; font: inherit; font-size: .64rem; font-weight: 800; white-space: nowrap; cursor: pointer; transition: .18s ease; }
+.admin-send-access-btn:hover { border-color: #1769AA; color: #fff; background: #1769AA; }
+.admin-no-client-email { color: #8797AC; font-size: .65rem; }
 .admin-client-identity { display: flex; align-items: center; gap: 10px; }
 .admin-client-avatar { width: 37px; height: 37px; display: grid; flex: 0 0 37px; place-items: center; border-radius: 50%; color: #1976ED; background: #EAF2FD; font-weight: 800; }
 .admin-client-identity > div { display: flex; flex-direction: column; gap: 3px; }
@@ -2074,8 +2078,9 @@
   .admin-directory-summary { align-items: flex-start; flex-wrap: wrap; }
   .admin-directory-summary > p { flex-basis: 100%; margin: 0; }
   .admin-client-table-wrap { overflow-x: auto; }
-  .admin-client-table { min-width: 750px; }
+  .admin-client-table { min-width: 900px; }
   .admin-client-form-card { padding: 18px 14px; }
+
   .admin-client-form-grid { grid-template-columns: 1fr; }
   .admin-client-password { grid-column: auto; }
   .admin-client-form-actions { flex-direction: column-reverse; }

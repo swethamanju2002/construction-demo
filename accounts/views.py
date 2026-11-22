@@ -1,8 +1,21 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.contrib.auth.views import PasswordResetConfirmView
 from django.shortcuts import render, redirect
-from django.urls import reverse
-from .forms import StyledAuthenticationForm
+from django.urls import reverse, reverse_lazy
+from .forms import ClientSetPasswordForm, StyledAuthenticationForm
+
+
+class ClientPasswordSetupView(PasswordResetConfirmView):
+    template_name = 'accounts/client_password_setup.html'
+    success_url = reverse_lazy('accounts:client_password_setup_complete')
+    form_class = ClientSetPasswordForm
+
+    def get_user(self, uidb64):
+        user = super().get_user(uidb64)
+        if user is not None and user.is_client:
+            return user
+        return None
 
 
 def login_view(request):

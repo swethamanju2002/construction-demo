@@ -1,13 +1,21 @@
 import json
+import logging
+import smtplib
 from decimal import Decimal
 from datetime import date
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.db.models import Avg
 from django.http import Http404, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from accounts.models import User
@@ -26,6 +34,8 @@ from .models import (
     SiteProgressHistory,
 )
 from .notifications import notify_site_admins, sync_scheduled_notifications
+
+logger = logging.getLogger(__name__)
 
 
 def create_client_feedback_notification(feedback):
@@ -761,6 +771,64 @@ def admin_client_create(request):
         'next_url': next_url,
         'title': 'Create New Client'
     })
+
+
+@site_admin_required
+@require_POST
+def admin_send_client_portal_access(request, client_id):
+    client = get_object_or_404(User, pk=client_id, is_client=True)
+    try:
+        validate_email(client.email)
+    except ValidationError:
+        messages.error(
+            request,
+            f"Add a valid email address for {client.get_full_name() or client.username} first.",
+        )
+        return redirect(f"{reverse('projects:admin_client_list')}#client-{client.id}")
+
+    uid = urlsafe_base64_encode(force_bytes(client.pk))
+    token = default_token_generator.make_token(client)
+    setup_url = f"{settings.PUBLIC_BASE_URL}{reverse(
+        'accounts:client_password_setup',
+        kwargs={'uidb64': uid, 'token': token},
+    )}"
+    body = (
+        f"Hello {client.first_name or client.username},\n\n"
+        "Your Structura client portal account is ready.\n\n"
+        f"Username: {client.username}\n"
+        "Set your password using this time-limited link:\n"
+        f"{setup_url}\n\n"
+        f"After setting your password, sign in at {settings.PUBLIC_BASE_URL}{reverse('accounts:login')}.\n"
+        "If you did not expect this message, contact your project administrator."
+    )
+
+    try:
+        sent_count = send_mail(
+            subject='Your Structura client portal access',
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[client.email],
+            fail_silently=False,
+        )
+    except (OSError, smtplib.SMTPException):
+        logger.exception('Could not send client portal access email to client %s.', client.pk)
+        messages.error(
+            request,
+            'The portal access email could not be sent. Check the email server settings and try again.',
+        )
+    else:
+        if sent_count == 1:
+            messages.success(
+                request,
+                f"Portal access email sent to {client.email}.",
+            )
+        else:
+            messages.error(
+                request,
+                'The email service did not accept the portal access message.',
+            )
+
+    return redirect(f"{reverse('projects:admin_client_list')}#client-{client.id}")
 
 
 @site_admin_required

@@ -1,20 +1,23 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Client Portal | Structura CRM{% endblock %}
+{% block title %}Client Portal | Structura{% endblock %}
 
 {% block content %}
-<div class="container client-no-site-page" style="max-width: 650px; padding-top: 5rem; padding-bottom: 5rem; text-align: center;">
-  <div class="card" style="padding: 3rem 2rem; box-shadow: var(--shadow-md);">
-    <div style="font-size: 3rem; margin-bottom: 1rem;">🏗</div>
-    <h2 style="margin-bottom: 0.5rem;">Project Assignment Pending</h2>
-    <p style="margin-bottom: 1.5rem;">
-      Hello {{ user.first_name|default:user.username }}, your homeowner account is active, but your construction site has not been assigned by the project administrator yet.
-    </p>
-    <div style="background: var(--surface-subtle); padding: 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.5rem;">
-      Please contact your Lead Project Engineer or call headquarters at <strong>+1 (800) 555-STRUCT</strong> to connect your project.
+<main class="client-unassigned-page">
+  <div class="client-unassigned-card">
+    <div class="client-unassigned-visual">
+      <span class="client-unassigned-building" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+      <span class="client-unassigned-mark">S</span>
     </div>
-    <a href="{% url 'core:home' %}" class="btn btn-primary">Return to Homepage</a>
+    <div class="client-unassigned-copy">
+      <span class="client-section-kicker">Your client account</span>
+      <h1>We’re getting your project portal ready.</h1>
+      <p>Hello {{ user.first_name|default:user.username }}. Your account is active, but a construction site has not been assigned yet. Once your project administrator connects your site, its progress and updates will appear here.</p>
+      <div class="client-unassigned-status"><span></span><div><strong>Assignment pending</strong><small>There’s nothing you need to do in the portal right now.</small></div></div>
+      <div class="client-unassigned-actions"><a href="{% url 'core:contact' %}" class="btn public-btn-navy">Contact the project team <span aria-hidden="true">→</span></a><a href="{% url 'core:home' %}" class="client-home-link">Return to Structura home</a></div>
+      <small class="client-unassigned-phone">Need help? Call +1 (800) 555-STRUCT</small>
+    </div>
   </div>
-</div>
+</main>
 {% endblock %}

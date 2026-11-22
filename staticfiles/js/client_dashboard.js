@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Value text
         ctx.font = 'bold 2rem Inter, sans-serif';
-        ctx.fillStyle = '#10243A';
+        ctx.fillStyle = '#10213F';
         ctx.fillText(`${completedPct}%`, centerX, centerY - 6);
 
         // Subtitle text
         ctx.font = '600 0.8rem Inter, sans-serif';
-        ctx.fillStyle = '#64748B';
+        ctx.fillStyle = '#687B98';
         ctx.fillText('COMPLETED', centerX, centerY + 22);
 
         ctx.restore();
@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
         labels: ['Completed', 'Remaining'],
         datasets: [{
           data: [completedPct, remainingPct],
-          backgroundColor: ['#1769AA', '#E2E8F0'],
-          hoverBackgroundColor: ['#12558A', '#CBD5E1'],
+          backgroundColor: ['#1976ED', '#E8EEF7'],
+          hoverBackgroundColor: ['#1266D6', '#D6E0EE'],
           borderWidth: 0,
           cutout: '76%',
         }]
@@ -86,11 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Palette mapping by category
     const categoryColors = [
-      '#1769AA', // Building Work
-      '#F5A623', // Electrical Work
-      '#0284C7', // Plumbing Work
-      '#8B5CF6', // Showcase Work
-      '#EC4899', // Wall Ceiling Work
+      '#1976ED', // Building Work
+      '#F5B323', // Electrical Work
+      '#19B66A', // Plumbing Work
+      '#657EEA', // Showcase Work
+      '#48A8B5', // Wall Ceiling Work
     ];
 
     new Chart(barCanvas, {
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 family: 'Inter, sans-serif',
                 weight: '600',
               },
-              color: '#10243A',
+              color: '#10213F',
             }
           }
         },

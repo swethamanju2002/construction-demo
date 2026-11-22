@@ -1,86 +1,55 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }} | Structura CRM{% endblock %}
+{% block title %}{{ title }} | Structura Admin{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-<div class="container crm-client-form-page" style="max-width: 620px; padding-top: 2.5rem; padding-bottom: 4rem;">
+<div class="admin-shell">
+  {% with admin_active='users' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main admin-client-create-main">
+      <div class="admin-page-breadcrumb"><a href="{% url 'projects:admin_client_list' %}">Client directory</a><span>/</span><strong>New client</strong></div>
+      <section class="admin-page-heading">
+        <div><span class="admin-eyebrow navy">People & access</span><h1>{{ title }}</h1><p>Create a secure client account for the project portal.</p></div>
+      </section>
 
-  <div style="margin-bottom: 1.5rem;">
-    <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'projects:admin_client_list' %}{% endif %}" class="btn btn-outline btn-sm">
-      ← Back
-    </a>
+      <div class="admin-client-create-layout">
+        <section class="admin-client-form-card">
+          <header class="admin-client-form-heading"><span class="admin-form-step">01</span><div><h2>Client information</h2><p>Enter the client’s contact and login details.</p></div></header>
+          <form method="post" class="admin-client-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="admin-client-form-grid">
+              <div class="form-group"><label class="form-label" for="{{ form.first_name.id_for_label }}">First name *</label>{{ form.first_name }}{% if form.first_name.errors %}<div class="site-field-error">{{ form.first_name.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group"><label class="form-label" for="{{ form.last_name.id_for_label }}">Last name</label>{{ form.last_name }}{% if form.last_name.errors %}<div class="site-field-error">{{ form.last_name.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group"><label class="form-label" for="{{ form.username.id_for_label }}">Username / login ID *</label>{{ form.username }}{% if form.username.errors %}<div class="site-field-error">{{ form.username.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group"><label class="form-label" for="{{ form.email.id_for_label }}">Email address</label>{{ form.email }}{% if form.email.errors %}<div class="site-field-error">{{ form.email.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group"><label class="form-label" for="{{ form.phone_number.id_for_label }}">Phone number</label>{{ form.phone_number }}{% if form.phone_number.errors %}<div class="site-field-error">{{ form.phone_number.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group"><label class="form-label" for="{{ form.company_name.id_for_label }}">Company / household</label>{{ form.company_name }}{% if form.company_name.errors %}<div class="site-field-error">{{ form.company_name.errors.0 }}</div>{% endif %}</div>
+              <div class="form-group admin-client-password"><label class="form-label" for="{{ form.password.id_for_label }}">Initial password *</label>{{ form.password }}{% if form.password.errors %}<div class="site-field-error">{{ form.password.errors.0 }}</div>{% endif %}<small>Share this password securely with the client. It is stored as a password hash.</small></div>
+            </div>
+            <div class="admin-client-form-actions">
+              <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'projects:admin_client_list' %}{% endif %}" class="btn admin-detail-light-btn">Cancel</a>
+              <button type="submit" class="btn admin-card-btn">Create client account <span aria-hidden="true">→</span></button>
+            </div>
+          </form>
+        </section>
+
+        <aside class="admin-client-help-card">
+          <span class="admin-client-help-icon">♙</span>
+          <span class="admin-eyebrow">Client access</span>
+          <h2>Only assigned projects are visible.</h2>
+          <p>After creating an account, assign the client to a site. Clients can view progress and photos, but cannot change project records.</p>
+          <div class="admin-client-help-rule"></div>
+          <a href="{% url 'projects:admin_dashboard' %}" class="admin-client-help-link">Review sites <span aria-hidden="true">↗</span></a>
+        </aside>
+      </div>
+    </main>
   </div>
-
-  <div class="card" style="box-shadow: var(--shadow-md);">
-    <div class="card-header">
-      <div>
-        <h2>{{ title }}</h2>
-        <p style="margin-top: 4px;">Register client credentials. Clients use these credentials to access their progress dashboard.</p>
-      </div>
-    </div>
-
-    <form method="post">
-      {% csrf_token %}
-
-      {% if form.non_field_errors %}
-      <div class="alert alert-error">
-        {{ form.non_field_errors }}
-      </div>
-      {% endif %}
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label" for="id_first_name">First Name *</label>
-          {{ form.first_name }}
-          {% if form.first_name.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.first_name.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_last_name">Last Name</label>
-          {{ form.last_name }}
-          {% if form.last_name.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.last_name.errors.0 }}</div>{% endif %}
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="id_username">Username / Login ID *</label>
-        {{ form.username }}
-        {% if form.username.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>{% endif %}
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label" for="id_email">Email Address</label>
-          {{ form.email }}
-          {% if form.email.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.email.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_phone_number">Phone Number</label>
-          {{ form.phone_number }}
-          {% if form.phone_number.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.phone_number.errors.0 }}</div>{% endif %}
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="id_company_name">Company / Household Name</label>
-        {{ form.company_name }}
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="id_password">Initial Login Password *</label>
-        {{ form.password }}
-        {% if form.password.errors %}<div style="color: var(--error); font-size: 0.82rem; margin-top: 4px;">{{ form.password.errors.0 }}</div>{% endif %}
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Provide this password to the client along with their username.</div>
-      </div>
-
-      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 2rem;">
-        <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'projects:admin_client_list' %}{% endif %}" class="btn btn-outline">Cancel</a>
-        <button type="submit" class="btn btn-primary">Create Client Account ✓</button>
-      </div>
-    </form>
-  </div>
-
 </div>
 {% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/admin_dashboard.js' %}"></script>{% endblock %}

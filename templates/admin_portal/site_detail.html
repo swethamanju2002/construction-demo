@@ -1,247 +1,120 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Manage {{ site.name }} | Structura CRM{% endblock %}
+{% block title %}{{ site.name }} | Site Operations | Structura{% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block extra_head %}
 <style>
-  .category-disabled {
-    opacity: 0.65;
-    background: #F8FAFC !important;
-  }
-  .category-disabled .checklist-item {
-    pointer-events: none;
-    background: #EDF2F7;
-  }
+  .category-disabled { opacity: .62; background: #F7F9FC !important; }
+  .category-disabled .checklist-item { pointer-events: none; background: #EEF2F7; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container admin-management-page" style="padding-top: 2rem; padding-bottom: 4rem;">
+<div class="admin-shell">
+  {% with admin_active='sites' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main admin-detail-main">
+      <div class="admin-page-breadcrumb"><a href="{% url 'projects:admin_dashboard' %}">Sites</a><span>/</span><strong>{{ site.name }}</strong></div>
 
-  <!-- Breadcrumbs & Navigation -->
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--text-muted);">
-      <a href="{% url 'projects:admin_dashboard' %}">Portfolio Overview</a>
-      <span>/</span>
-      <span style="color: var(--navy); font-weight: 600;">{{ site.name }}</span>
-    </div>
-
-    <div style="display: flex; gap: 10px;">
-      <a href="{% url 'projects:admin_site_edit' site.id %}" class="btn btn-outline btn-sm">
-        Edit Project Details ✏
-      </a>
-      <a href="{% url 'projects:client_site_detail' site.id %}" target="_blank" class="btn btn-outline btn-sm" title="Preview how the client experiences this dashboard">
-        Preview Client View ↗
-      </a>
-    </div>
-  </div>
-
-  <!-- Project Summary Header Card -->
-  <div class="card" style="margin-bottom: 2rem; border-left: 6px solid var(--primary); box-shadow: var(--shadow-md);">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem;">
-      <div style="flex: 1; min-width: 280px;">
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-          <span class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</span>
-          <span style="color: var(--text-muted); font-size: 0.85rem;">Project ID: #{{ site.id }}</span>
-        </div>
-        <h1 style="font-size: 1.85rem; margin-bottom: 6px;">{{ site.name }}</h1>
-        <p style="margin-bottom: 12px; font-size: 0.95rem;">📍 {{ site.site_address }}</p>
-        
-        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.88rem;">
-          <div>
-            <strong style="color: var(--navy);">Assigned Client:</strong> {{ site.client.get_full_name|default:site.client.username }}
-            <span style="color: var(--text-muted);">({{ site.client.email|default:"No email" }})</span>
-          </div>
-          <div>
-            <strong style="color: var(--navy);">Lead Engineer:</strong> {{ site.project_manager }}
-          </div>
-          <div>
-            <strong style="color: var(--navy);">Timeline:</strong> {{ site.start_date|date:"M Y" }} &rarr; {{ site.estimated_completion_date|date:"M Y" }}
+      <section class="admin-detail-hero">
+        <div class="admin-detail-title">
+          <div class="admin-detail-overline"><span class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</span><span>Project #{{ site.id }}</span></div>
+          <h1>{{ site.name }}</h1>
+          <p><span aria-hidden="true">⌖</span>{{ site.site_address }}</p>
+          <div class="admin-detail-actions">
+            <a href="{% url 'projects:admin_site_edit' site.id %}" class="btn admin-card-btn">Edit project</a>
+            <a href="{% url 'projects:admin_dashboard' %}" class="btn admin-detail-light-btn">Back to sites</a>
           </div>
         </div>
-      </div>
+        <div class="admin-detail-progress-panel">
+          <span>Overall site progress</span>
+          <strong id="overall-progress-val">{{ overall_progress }}%</strong>
+          <div class="progress-container"><div id="overall-progress-bar" class="progress-bar" style="width: {{ overall_progress }}%;"></div></div>
+          <small>Average of enabled work categories</small>
+        </div>
+      </section>
 
-      <!-- Real-Time Overall Progress Gauge -->
-      <div style="min-width: 240px; background: var(--surface-subtle); padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
-        <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
-          Dynamic Overall Progress
-        </div>
-        <div id="overall-progress-val" style="font-size: 2.5rem; font-weight: 800; color: var(--navy); line-height: 1.1; margin-bottom: 8px;">
-          {{ overall_progress }}%
-        </div>
-        <div class="progress-container" style="height: 12px; margin-bottom: 6px;">
-          <div id="overall-progress-bar" class="progress-bar" style="width: {{ overall_progress }}%;"></div>
-        </div>
-        <div style="font-size: 0.76rem; color: var(--text-muted);">
-          Computed backend average of enabled categories
-        </div>
-      </div>
-    </div>
-  </div>
+      <section class="admin-detail-facts">
+        <div><span>Assigned client</span><strong>{{ site.client.get_full_name|default:site.client.username }}</strong><small>{{ site.client.email|default:"No email recorded" }}</small></div>
+        <div><span>Project lead</span><strong>{{ site.project_manager }}</strong><small>Site coordination</small></div>
+        <div><span>Start date</span><strong>{{ site.start_date|date:"M d, Y" }}</strong><small>Estimated completion {{ site.estimated_completion_date|date:"M d, Y" }}</small></div>
+      </section>
 
-  <!-- WORK CATEGORIES & SUBTASKS SECTION -->
-  <div style="margin-bottom: 3rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-      <div>
-        <h2>Work Categories & Task Checklists</h2>
-        <p>Toggle optional categories and check off completed subtasks to automatically recalculate site progress.</p>
-      </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem;">
-      {% for scp in category_progresses %}
-      <div class="card {% if not scp.is_enabled %}category-disabled{% endif %}" id="category-card-{{ scp.id }}" style="display: flex; flex-direction: column; justify-content: space-between;">
-        
-        <div>
-          <!-- Category Card Header -->
-          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 1rem;">
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <h3 style="font-size: 1.2rem;">{{ scp.category.name }}</h3>
+      <section class="admin-detail-section">
+        <div class="admin-detail-section-heading">
+          <div><span class="admin-eyebrow navy">Progress management</span><h2>Work categories & checklists</h2><p>Update task completion or enable optional work streams. Progress recalculates from saved work records.</p></div>
+        </div>
+        <div class="admin-category-grid">
+          {% for scp in category_progresses %}
+          <article class="admin-category-card {% if not scp.is_enabled %}category-disabled{% endif %}" id="category-card-{{ scp.id }}">
+            <header class="admin-category-card-heading">
+              <div class="admin-category-icon">
+                {% if scp.category.slug == 'electrical-work' %}⚡{% elif scp.category.slug == 'plumbing-work' %}⌁{% elif scp.category.slug == 'showcase-work' %}▤{% elif scp.category.slug == 'wall-ceiling-work' %}▥{% else %}⌂{% endif %}
+              </div>
+              <div class="admin-category-title"><h3>{{ scp.category.name }}</h3><span class="badge {% if scp.category.is_mandatory %}badge-mandatory{% else %}badge-optional{% endif %}">{% if scp.category.is_mandatory %}Mandatory{% else %}Optional{% endif %}</span></div>
+              <div class="admin-category-toggle">
                 {% if scp.category.is_mandatory %}
-                  <span class="badge badge-mandatory">Mandatory</span>
+                <label class="toggle-switch" title="Mandatory category"><input type="checkbox" checked disabled><span class="toggle-slider"></span></label>
                 {% else %}
-                  <span class="badge badge-optional">Optional</span>
+                <label class="toggle-switch" title="Toggle optional category"><input type="checkbox" class="category-toggle-checkbox" data-category-progress-id="{{ scp.id }}" {% if scp.is_enabled %}checked{% endif %}><span class="toggle-slider"></span></label>
                 {% endif %}
               </div>
-              <p style="font-size: 0.82rem; margin: 0;">{{ scp.category.description|truncatechars:70 }}</p>
+            </header>
+            <p class="admin-category-description">{{ scp.category.description }}</p>
+            <div class="admin-category-progress">
+              <div><span id="cat-task-count-{{ scp.id }}">{{ scp.completed_tasks_count }} of {{ scp.total_tasks_count }} tasks complete</span><strong id="cat-progress-text-{{ scp.id }}">{{ scp.progress_percentage }}%</strong></div>
+              <div class="progress-container"><div id="cat-progress-bar-{{ scp.id }}" class="progress-bar {% if scp.progress_percentage == 100 %}success{% endif %}" style="width: {{ scp.progress_percentage }}%;"></div></div>
             </div>
-
-            <!-- Category Toggle Switch (Enabled/Disabled) -->
-            <div>
-              {% if scp.category.is_mandatory %}
-                <label class="toggle-switch" title="Mandatory categories are permanently enabled for construction safety compliance">
-                  <input type="checkbox" checked disabled>
-                  <span class="toggle-slider"></span>
-                </label>
-              {% else %}
-                <label class="toggle-switch" title="Toggle optional category for this site">
-                  <input type="checkbox" class="category-toggle-checkbox" data-category-progress-id="{{ scp.id }}" {% if scp.is_enabled %}checked{% endif %}>
-                  <span class="toggle-slider"></span>
-                </label>
-              {% endif %}
+            <div class="admin-checklist-heading"><span>Task checklist</span><span id="cat-status-badge-{{ scp.id }}" class="badge {% if scp.is_enabled %}badge-ongoing{% else %}badge-optional{% endif %}">{% if scp.is_enabled %}Enabled{% else %}Disabled{% endif %}</span></div>
+            <div class="checklist-group">
+              {% for task in scp.tasks.all %}
+              <div class="checklist-item {% if task.is_completed %}completed{% endif %}" id="task-item-{{ task.id }}">
+                <label class="checklist-label"><input type="checkbox" class="checklist-checkbox task-toggle-checkbox" data-task-id="{{ task.id }}" {% if task.is_completed %}checked{% endif %}><span>{{ task.task_name }}</span></label>
+                {% if task.is_completed and task.completed_date %}<time>{{ task.completed_date|date:"M d" }}</time>{% endif %}
+              </div>
+              {% empty %}<p class="admin-no-tasks">No checklist items are configured.</p>{% endfor %}
             </div>
-          </div>
-
-          <!-- Category Progress Bar & Count -->
-          <div style="margin-bottom: 1.25rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px;">
-              <span id="cat-task-count-{{ scp.id }}">{{ scp.completed_tasks_count }} of {{ scp.total_tasks_count }} completed</span>
-              <span id="cat-progress-text-{{ scp.id }}" style="color: var(--primary);">{{ scp.progress_percentage }}%</span>
-            </div>
-            <div class="progress-container">
-              <div id="cat-progress-bar-{{ scp.id }}" class="progress-bar {% if scp.category.slug == 'electrical-work' %}amber{% elif scp.progress_percentage == 100 %}success{% endif %}" style="width: {{ scp.progress_percentage }}%;"></div>
-            </div>
-          </div>
-
-          <!-- Subtasks Checklist -->
-          <div style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--navy); margin-bottom: 8px;">
-            Subtasks Checklist:
-          </div>
-          <div class="checklist-group">
-            {% for task in scp.tasks.all %}
-            <div class="checklist-item {% if task.is_completed %}completed{% endif %}" id="task-item-{{ task.id }}">
-              <label class="checklist-label">
-                <input type="checkbox" class="checklist-checkbox task-toggle-checkbox" data-task-id="{{ task.id }}" {% if task.is_completed %}checked{% endif %}>
-                <span>{{ task.task_name }}</span>
-              </label>
-              {% if task.is_completed and task.completed_date %}
-                <span style="font-size: 0.72rem; color: var(--success); font-weight: 600; white-space: nowrap;">
-                  ✓ {{ task.completed_date|date:"M d" }}
-                </span>
-              {% endif %}
-            </div>
-            {% empty %}
-            <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">No subtasks configured.</div>
-            {% endfor %}
-          </div>
+            <footer class="admin-category-footer"><span>Updated {{ scp.updated_at|timesince }} ago</span><span>{% if scp.category.is_mandatory %}Required work stream{% else %}Optional work stream{% endif %}</span></footer>
+          </article>
+          {% endfor %}
         </div>
+      </section>
 
-        <div style="margin-top: 1.25rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-          <span id="cat-status-badge-{{ scp.id }}" class="badge {% if scp.is_enabled %}badge-ongoing{% else %}badge-optional{% endif %}">
-            {% if scp.is_enabled %}Active / Enabled{% else %}Disabled (Excluded from Calc){% endif %}
-          </span>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">Updated {{ scp.updated_at|timesince }} ago</span>
+      <section class="admin-detail-section admin-photos-panel">
+        <div class="admin-detail-section-heading">
+          <div><span class="admin-eyebrow navy">Client-visible updates</span><h2>Site photos</h2><p>Upload project photos to the client’s read-only progress feed.</p></div>
         </div>
+        <form method="post" enctype="multipart/form-data" class="admin-photo-upload">
+          {% csrf_token %}
+          <input type="hidden" name="upload_photo" value="1">
+          {% if photo_form.non_field_errors %}<div class="site-field-error">{{ photo_form.non_field_errors }}</div>{% endif %}
+          <div class="admin-photo-form-grid">
+            <div class="form-group"><label class="form-label" for="{{ photo_form.image.id_for_label }}">Photo *</label>{{ photo_form.image }}{% if photo_form.image.errors %}<div class="site-field-error">{{ photo_form.image.errors.0 }}</div>{% endif %}</div>
+            <div class="form-group"><label class="form-label" for="{{ photo_form.caption.id_for_label }}">Caption *</label>{{ photo_form.caption }}{% if photo_form.caption.errors %}<div class="site-field-error">{{ photo_form.caption.errors.0 }}</div>{% endif %}</div>
+            <div class="form-group"><label class="form-label" for="{{ photo_form.category.id_for_label }}">Work category</label>{{ photo_form.category }}{% if photo_form.category.errors %}<div class="site-field-error">{{ photo_form.category.errors.0 }}</div>{% endif %}</div>
+          </div>
+          <button type="submit" class="btn admin-card-btn">Upload site update <span aria-hidden="true">↑</span></button>
+        </form>
 
-      </div>
-      {% endfor %}
-    </div>
+        <div class="admin-site-photo-grid">
+          {% for photo in photos %}
+          <article class="admin-site-photo-card">
+            <a href="{{ photo.image.url }}" class="open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} ({{ photo.category.name|default:'General Site' }})"><img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy"></a>
+            <div><span>{{ photo.category.name|default:"General Build" }} · {{ photo.uploaded_at|date:"M d, Y" }}</span><strong>{{ photo.caption }}</strong></div>
+          </article>
+          {% empty %}
+          <div class="admin-photo-empty"><span aria-hidden="true">▧</span><strong>No photos yet</strong><p>Uploaded site updates will appear here and in the client portal.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
   </div>
-
-  <!-- SITE PHOTO STREAM & UPLOADER SECTION -->
-  <div class="card" style="margin-bottom: 2rem;">
-    <div class="card-header">
-      <div>
-        <h2>Verified Site Progress Photos</h2>
-        <p>Upload daily on-site verification photos visible on the client's progress feed.</p>
-      </div>
-    </div>
-
-    <!-- Upload Form -->
-    <div style="background: var(--surface-subtle); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 2rem;">
-      <h4 style="margin-bottom: 1rem;">Upload New Site Photo</h4>
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="upload_photo" value="1">
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Photo Image File *</label>
-            {{ photo_form.image }}
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Caption / Description *</label>
-            {{ photo_form.caption }}
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Related Work Category</label>
-            {{ photo_form.category }}
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-sm">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          Upload Progress Photo
-        </button>
-      </form>
-    </div>
-
-    <!-- Uploaded Photos Grid -->
-    <div class="gallery-grid">
-      {% for photo in photos %}
-      <div class="photo-card">
-        <div class="photo-card-img-wrap">
-          <a href="{{ photo.image.url }}" class="open-lightbox" data-img-src="{{ photo.image.url }}" data-caption="{{ photo.caption }} ({{ photo.category.name|default:'General Site' }})">
-            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy">
-          </a>
-        </div>
-        <div class="photo-card-body">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span class="badge badge-ongoing" style="font-size: 0.7rem;">{{ photo.category.name|default:"General Build" }}</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted);">{{ photo.uploaded_at|date:"M d, Y" }}</span>
-            </div>
-            <div style="font-weight: 600; font-size: 0.92rem; color: var(--navy); line-height: 1.3;">{{ photo.caption }}</div>
-          </div>
-        </div>
-      </div>
-      {% empty %}
-      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--text-muted);">
-        <p>No site progress photos uploaded yet. Upload inspection and completion photos above.</p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/admin_dashboard.js' %}"></script>
-{% endblock %}
+{% block extra_js %}<script src="{% static 'js/admin_dashboard.js' %}"></script>{% endblock %}

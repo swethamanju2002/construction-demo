@@ -233,3 +233,73 @@ class ProgressCalculationTests(TestCase):
                 site.category_progresses.get(category__slug=slug).is_enabled
             )
 
+
+class PortalPageRenderingTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='portaladmin',
+            password='PortalPassword123!',
+            is_site_admin=True,
+        )
+        self.client_user = User.objects.create_user(
+            username='portalclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.site = ConstructionSite.objects.create(
+            name='Portal Rendering Site',
+            client=self.client_user,
+            site_address='10 Construction Way',
+            start_date=timezone.now().date(),
+            estimated_completion_date=timezone.now().date() + timezone.timedelta(days=90),
+            status=ConstructionSite.STATUS_ONGOING,
+        )
+
+    def test_admin_pages_render_with_shared_portal_navigation(self):
+        self.client.force_login(self.admin)
+        paths = [
+            '/admin-portal/dashboard/',
+            '/admin-portal/site/create/',
+            f'/admin-portal/site/{self.site.id}/',
+            f'/admin-portal/site/{self.site.id}/edit/',
+            '/admin-portal/clients/',
+            '/admin-portal/clients/create/',
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'adminSidebar')
+                self.assertContains(response, 'adminMenuToggle')
+
+    def test_client_directory_site_assignment_prefills_client(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(
+            f'/admin-portal/site/create/?client={self.client_user.id}'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context['form']['client'].value(),
+            self.client_user.id,
+        )
+
+    def test_client_dashboard_remains_read_only_and_renders_project_data(self):
+        self.client.force_login(self.client_user)
+        response = self.client.get('/client-portal/dashboard/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'client-project-hero')
+        self.assertContains(response, self.site.name)
+        self.assertContains(response, 'overallProgressDonut')
+        self.assertNotContains(response, 'task-toggle-checkbox')
+
+    def test_unassigned_client_sees_portal_pending_state(self):
+        unassigned_client = User.objects.create_user(
+            username='unassignedportalclient',
+            password='PortalPassword123!',
+            is_client=True,
+        )
+        self.client.force_login(unassigned_client)
+        response = self.client.get('/client-portal/dashboard/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'client-unassigned-page')
+

@@ -47,7 +47,9 @@
   </div>
 
   <!-- Global Footer -->
-  {% include 'includes/footer.html' %}
+  {% block footer %}
+    {% include 'includes/footer.html' %}
+  {% endblock %}
 
   <!-- Base Utilities -->
   <script src="{% static 'js/main.js' %}"></script>

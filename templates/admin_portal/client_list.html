@@ -1,91 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Manage Clients | Structura CRM{% endblock %}
+{% block title %}Client Directory | Structura Admin{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-<div class="container crm-directory-page" style="padding-top: 2.5rem; padding-bottom: 4rem;">
-  
-  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
-        <span class="badge badge-ongoing">Client Directory</span>
-        <span style="color: var(--text-muted); font-size: 0.85rem;">{{ total_clients }} Registered Homeowners & Commercial Clients</span>
-      </div>
-      <h1>Client & Homeowner Accounts</h1>
-      <p>Manage authenticated client credentials, contact details, and site assignments.</p>
-    </div>
+<div class="admin-shell">
+  {% with admin_active='users' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main admin-directory-main">
+      <section class="admin-page-heading">
+        <div><span class="admin-eyebrow navy">People & access</span><h1>Client directory</h1><p>Manage client accounts and see which construction projects are assigned to them.</p></div>
+        <a href="{% url 'projects:admin_client_create' %}" class="btn admin-create-btn"><span aria-hidden="true">＋</span> Register client</a>
+      </section>
 
-    <div style="display: flex; gap: 10px;">
-      <a href="{% url 'projects:admin_dashboard' %}" class="btn btn-outline">
-        ← Portfolio Overview
-      </a>
-      <a href="{% url 'projects:admin_client_create' %}" class="btn btn-amber">
-        + Register New Client
-      </a>
-    </div>
+      <section class="admin-directory-summary">
+        <span class="admin-directory-summary-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </span>
+        <div><strong>{{ total_clients }}</strong><span>Registered client accounts</span></div>
+        <p>Each client can only view the site assigned to their account.</p>
+      </section>
+
+      <section class="admin-directory-panel">
+        <div class="admin-directory-panel-heading"><div><h2>Homeowners & clients</h2><p>Account details and project assignments</p></div><span class="admin-record-count">{{ total_clients }} total</span></div>
+        <div class="admin-client-table-wrap">
+          <table class="admin-client-table">
+            <thead><tr><th>Client</th><th>Contact</th><th>Assigned projects</th><th>Joined</th></tr></thead>
+            <tbody>
+              {% for client in clients %}
+              <tr>
+                <td>
+                  <div class="admin-client-identity"><span class="admin-client-avatar">{{ client.first_name|first|default:client.username|first|upper }}</span><div><strong>{{ client.get_full_name|default:client.username }}</strong><small>@{{ client.username }}{% if client.company_name %} · {{ client.company_name }}{% endif %}</small></div></div>
+                </td>
+                <td><div class="admin-client-contact"><span>{{ client.email|default:"No email recorded" }}</span>{% if client.phone_number %}<small>{{ client.phone_number }}</small>{% endif %}</div></td>
+                <td>
+                  <div class="admin-assigned-sites">
+                    {% for site in client.assigned_sites.all %}
+                    <a href="{% url 'projects:admin_site_detail' site.id %}" class="admin-assigned-site"><span>{{ site.name }}</span><small class="badge {{ site.status_badge_class }}">{{ site.get_status_display }}</small></a>
+                    {% empty %}
+                    <span class="admin-unassigned-label">No site assigned</span>
+                    <a href="{% url 'projects:admin_site_create' %}?client={{ client.id }}" class="admin-assign-link">Assign site →</a>
+                    {% endfor %}
+                  </div>
+                </td>
+                <td><span class="admin-joined-date">{{ client.date_joined|date:"M d, Y" }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4"><div class="admin-directory-empty"><span aria-hidden="true">♙</span><h3>No client accounts yet</h3><p>Create an account to assign a homeowner to a project.</p><a href="{% url 'projects:admin_client_create' %}" class="btn admin-card-btn">Register first client</a></div></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   </div>
-
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Client Name</th>
-          <th>Username / ID</th>
-          <th>Contact Info</th>
-          <th>Assigned Construction Project</th>
-          <th>Account Created</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for client in clients %}
-        <tr>
-          <td>
-            <div style="font-weight: 700; color: var(--navy); font-size: 1rem;">
-              {{ client.get_full_name|default:client.username }}
-            </div>
-            {% if client.company_name %}
-              <div style="font-size: 0.82rem; color: var(--text-muted);">🏢 {{ client.company_name }}</div>
-            {% endif %}
-          </td>
-          <td>
-            <code>{{ client.username }}</code>
-          </td>
-          <td style="font-size: 0.88rem;">
-            <div>✉ {{ client.email|default:"No email" }}</div>
-            {% if client.phone_number %}
-              <div style="color: var(--text-muted);">📞 {{ client.phone_number }}</div>
-            {% endif %}
-          </td>
-          <td>
-            {% for site in client.assigned_sites.all %}
-              <div style="margin-bottom: 4px;">
-                <a href="{% url 'projects:admin_site_detail' site.id %}" style="font-weight: 600;">
-                  🏗 {{ site.name }}
-                </a>
-                <span class="badge {{ site.status_badge_class }}" style="font-size: 0.7rem; margin-left: 6px;">{{ site.calculate_overall_progress }}%</span>
-              </div>
-            {% empty %}
-              <span style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">No site assigned yet</span>
-              <a href="{% url 'projects:admin_site_create' %}" class="btn btn-outline btn-sm" style="margin-left: 6px; padding: 2px 8px; font-size: 0.75rem;">
-                + Assign Site
-              </a>
-            {% endfor %}
-          </td>
-          <td style="font-size: 0.85rem; color: var(--text-muted);">
-            {{ client.date_joined|date:"M d, Y" }}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-            No clients registered yet. Click "Register New Client" above.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
 </div>
 {% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/admin_dashboard.js' %}"></script>{% endblock %}

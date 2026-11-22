@@ -2,8 +2,15 @@
 {% load static %}
 
 {% block title %}{{ title }} | Structura CRM{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
+<div class="admin-shell">
+  {% if site %}{% with admin_active='sites' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}{% else %}{% with admin_active='new-site' %}{% include 'includes/admin_sidebar.html' %}{% endwith %}{% endif %}
+  <div class="admin-workspace">
+    {% include 'includes/admin_topbar.html' %}
+    <main class="admin-main admin-site-form-main">
 <div class="site-registration-page">
   <div class="site-registration-inner">
     <a href="{% url 'projects:admin_dashboard' %}" class="site-back-link">
@@ -183,10 +190,13 @@
       </div>
     </form>
   </div>
+  </main>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+  <script src="{% static 'js/admin_dashboard.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('quickClientModal');

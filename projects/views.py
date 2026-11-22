@@ -117,7 +117,13 @@ def admin_site_create(request):
             )
             return redirect('projects:admin_site_detail', site_id=site.id)
     else:
-        form = ConstructionSiteForm()
+        initial = {}
+        client_id = request.GET.get('client')
+        if client_id:
+            client = User.objects.filter(id=client_id, is_client=True).first()
+            if client:
+                initial['client'] = client.id
+        form = ConstructionSiteForm(initial=initial)
 
     return render(request, 'admin_portal/site_form.html', {'form': form, 'title': 'Create New Construction Site'})
 
